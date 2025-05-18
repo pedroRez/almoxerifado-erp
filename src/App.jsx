@@ -192,19 +192,22 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    background: '#e0f7fa',
+    background: '#121212', // fundo escuro
+    color: '#ffffff', // cor de texto global
   },
   container: {
     width: 400,
     padding: 20,
     borderRadius: 10,
-    background: '#a9a9a9',
-    boxShadow: '0 0 15px #ccc',
+    background: '#1e1e1e', // caixa escura
+    boxShadow: '0 0 15px #000', // sombra escura
     textAlign: 'center',
     fontFamily: 'Arial',
+    color: '#ffffff', // texto claro
   },
   title: {
     marginBottom: 20,
+    color: '#00bcd4', // azul turquesa
   },
   form: {
     display: 'flex',
@@ -214,10 +217,14 @@ const styles = {
   input: {
     padding: 10,
     fontSize: 16,
+    backgroundColor: '#2c2c2c',
+    color: '#ffffff',
+    border: '1px solid #444',
+    borderRadius: 5,
   },
   button: {
     padding: 10,
-    backgroundColor: '#00008b',
+    backgroundColor: '#00bcd4', // azul turquesa
     color: 'white',
     border: 'none',
     fontSize: 16,
@@ -232,7 +239,7 @@ const styles = {
   },
   link: {
     background: 'none',
-    color: '#007bff',
+    color: '#00bcd4', // link azul turquesa
     border: 'none',
     cursor: 'pointer',
     fontSize: 14,
@@ -241,14 +248,17 @@ const styles = {
   mensagem: {
     marginTop: 15,
     fontSize: 14,
-    color: 'green',
+    color: '#00e676', // verde neon
   },
   dashboardContainer: {
     padding: 30,
     fontFamily: 'Arial',
+    backgroundColor: '#121212',
+    color: '#ffffff',
+    minHeight: '100vh',
   },
   logout: {
-    backgroundColor: '#f44336',
+    backgroundColor: '#f44336', // vermelho
     color: 'white',
     border: 'none',
     padding: '8px 16px',
@@ -265,9 +275,11 @@ const styles = {
   },
   card: {
     padding: 20,
-    backgroundColor: '#e0f7fa',
+    backgroundColor: '#1e1e1e', // fundo escuro do card
     borderRadius: 10,
     textAlign: 'center',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+    color: '#ffffff',
+    border: '1px solid #00bcd4', // borda azul
   },
 };
