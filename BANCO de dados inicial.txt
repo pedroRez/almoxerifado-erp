@@ -35,3 +35,13 @@ CREATE TABLE movimentacoes (
   quantidade INT,
   data TIMESTAMP DEFAULT now()
 );
+
+-- TABELA DE PEÇAS
+create table pecas (
+  id serial primary key,
+  nome text not null,
+  descricao text,
+  quantidade integer,
+  created_at timestamp with time zone default timezone('utc'::text, now())
+);
+
