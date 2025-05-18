@@ -1,0 +1,37 @@
+-- Tabela de usuários
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT CHECK (role IN ('gerente', 'funcionario')) NOT NULL
+);
+
+-- Tabela de peças
+CREATE TABLE pecas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome TEXT NOT NULL,
+  tipo TEXT,
+  fabricante TEXT,
+  estoque_atual INT,
+  estoque_minimo INT
+);
+
+-- Tabela de máquinas
+CREATE TABLE maquinas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome TEXT,
+  tipo TEXT CHECK (tipo IN ('escavadeira', 'caminhao')),
+  localizacao TEXT,
+  motorista TEXT
+);
+
+-- Movimentações
+CREATE TABLE movimentacoes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  peca_id UUID REFERENCES pecas(id),
+  usuario_id UUID REFERENCES users(id),
+  maquina_id UUID REFERENCES maquinas(id),
+  tipo TEXT CHECK (tipo IN ('entrada', 'saida')),
+  quantidade INT,
+  data TIMESTAMP DEFAULT now()
+);
