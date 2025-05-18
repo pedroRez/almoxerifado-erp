@@ -26,55 +26,19 @@ Siga estes passos para configurar o projeto em um novo ambiente:
     npm install
     ```
 
-3.  **Configurar o Tailwind CSS (se ainda não estiver configurado):**
-    Este projeto foi brevemente configurado para usar Tailwind CSS, mas foi removido. Se você deseja usar Tailwind CSS, siga estes passos:
-    ```bash
-    npm install -D tailwindcss postcss autoprefixer @tailwindcss/vite
-    npx tailwindcss init -p
-    ```
-    Edite `tailwind.config.js` para incluir os caminhos dos seus componentes:
-    ```javascript
-    /** @type {import('tailwindcss').Config} */
-    module.exports = {
-      content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
-      ],
-      theme: {
-        extend: {},
-      },
-      plugins: [],
-    }
-    ```
-    Edite `postcss.config.cjs` (ou `postcss.config.js`) para incluir Tailwind e Autoprefixer:
-    ```javascript
-    module.exports = {
-      plugins: {
-        tailwindcss: {},
-        autoprefixer: {},
-      },
-    };
-    ```
-    Adicione as diretivas do Tailwind ao seu `index.css` (`src/index.css`):
-    ```css
-    @tailwind base;
-    @tailwind components;
-    @tailwind utilities;
-    ```
-
-4.  **Configurar o Banco de Dados Local (SQLite):**
+3.  **Configurar o Banco de Dados Local (SQLite):**
     O projeto utiliza um banco de dados local SQLite para o almoxarifado.
     * O arquivo `localDatabase.js` contém a lógica para conectar e criar as tabelas no arquivo `almoxerifado.db`.
     * Certifique-se de que este arquivo esteja na raiz do seu projeto.
 
-5.  **Configurar o Arquivo Principal do Electron (`main.js`):**
+4.  **Configurar o Arquivo Principal do Electron (`main.js`):**
     * Crie um arquivo `main.js` na raiz do projeto com a lógica para iniciar o Electron e carregar a aplicação React. O conteúdo deste arquivo deve ser semelhante ao que foi compartilhado durante a conversa.
     * Certifique-se de que a função `createWindow` carrega a URL do Vite (`http://localhost:5173/`) durante o desenvolvimento.
 
-6.  **Configurar o Arquivo de Pré-Carregamento (`preload.js`):**
+5.  **Configurar o Arquivo de Pré-Carregamento (`preload.js`):**
     * Crie um arquivo `preload.js` na raiz do projeto para expor a `electronAPI` para comunicação segura entre o React e o processo principal. O conteúdo deste arquivo deve ser semelhante ao que foi compartilhado durante a conversa.
 
-7.  **Modificar o Script `dev` no `package.json`:**
+6.  **Modificar o Script `dev` no `package.json`:**
     Edite a seção `"scripts"` no `package.json` para iniciar o Vite e o Electron simultaneamente:
     ```json
     "scripts": {
