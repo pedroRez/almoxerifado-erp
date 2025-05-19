@@ -103,6 +103,69 @@
   padding-bottom: 0;
 }
 
+/* CadastroPeca.module.css (ADICIONAR ESTAS CLASSES NO FINAL OU EM LOCAL APROPRIADO) */
+
+/* ... (todos os seus estilos existentes) ... */
+
+.searchContainer {
+  margin-bottom: 1.5rem; /* Espaçamento abaixo do campo de busca */
+  padding: 1rem;
+  background-color: #1e1e1e; /* Mesmo fundo dos cards */
+  border-radius: 8px;
+  border: 1px solid #333;
+  display: flex;
+  flex-direction: column; /* Label em cima, input embaixo */
+  gap: 0.5rem;
+}
+
+.searchLabel {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #bbb;
+  text-align: left;
+}
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem; /* Posição do ícone dentro do input */
+  color: #777;
+  pointer-events: none; /* Para o ícone não interferir com o clique no input */
+}
+
+.searchInput { /* Reutiliza a classe .input que você já tem, ou define uma nova */
+  /* Se .input já tem bom estilo, apenas ajuste o padding-left para o ícone */
+  padding: 0.75rem;
+  padding-left: 2.5rem; /* Espaço para o ícone de busca */
+  border-radius: 6px;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+.searchInput:focus {
+  outline: none;
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.3);
+}
+
+/* Para garantir que o .container ocupe a largura correta */
+.container {
+  min-height: calc(100vh - 5rem); 
+  background-color: #121212; 
+  color: #fff;
+  padding: 1rem 0.5rem; /* MANTIDO - ajuste se quiser borda a borda total */
+  box-sizing: border-box;
+  width: 100%;
+}
+
 /* --- Formulário de Cadastro/Edição de Peças --- */
 .formContainer { 
   max-width: 700px; /* Limita a largura do formulário */

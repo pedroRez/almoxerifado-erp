@@ -5,7 +5,7 @@ import { app } from 'electron';
 
 const sqlite3 = sqlite3_module.verbose();
 
-console.log("[localDatabase.js] Script carregado. Versão com inicialização de dbPath atrasada e logs detalhados (v2).");
+console.log("[localDatabase.js] Script carregado. vComGetUsersByRole_FinalCompleto");
 
 let dbPath = null;
 let db;
@@ -34,12 +34,13 @@ export function connectDatabase() {
                 reject(err);
             } else {
                 console.log('[localDatabase.js] Conectado/criado banco de dados SQLite em:', dbPath);
-                db.run("PRAGMA journal_mode = WAL;", (pragmaErr) => {
-                    if (pragmaErr) {
-                        console.warn("[localDatabase.js] Aviso: Falha ao definir PRAGMA journal_mode = WAL:", pragmaErr.message);
-                    } else {
-                        console.log("[localDatabase.js] PRAGMA journal_mode = WAL definido.");
-                    }
+                db.run("PRAGMA foreign_keys = ON;", (pragmaErrFk) => {
+                    if (pragmaErrFk) console.warn("[localDatabase.js] Aviso: Falha ao definir PRAGMA foreign_keys = ON:", pragmaErrFk.message);
+                    else console.log("[localDatabase.js] PRAGMA foreign_keys = ON definido.");
+                });
+                db.run("PRAGMA journal_mode = WAL;", (pragmaErrWal) => {
+                    if (pragmaErrWal) console.warn("[localDatabase.js] Aviso: Falha ao definir PRAGMA journal_mode = WAL:", pragmaErrWal.message);
+                    else console.log("[localDatabase.js] PRAGMA journal_mode = WAL definido.");
                     resolve();
                 });
             }
@@ -52,7 +53,7 @@ export function createTables() {
     const createPecasTable = `
         CREATE TABLE IF NOT EXISTS pecas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
+            nome TEXT NOT NULL UNIQUE,
             tipo TEXT,
             fabricante TEXT,
             estoque_atual INTEGER DEFAULT 0,
@@ -80,7 +81,7 @@ export function createTables() {
                 if (errPecas) {
                     console.error('[localDatabase.js] Erro ao criar/verificar tabela "pecas":', errPecas.message);
                 } else {
-                    console.log('[localDatabase.js] Tabela "pecas" (estrutura com estoque_atual) verificada/criada.');
+                    console.log('[localDatabase.js] Tabela "pecas" (com nome UNIQUE) verificada/criada.');
                 }
                 
                 console.log("[localDatabase.js] Executando CREATE TABLE para 'users'...");
@@ -91,7 +92,8 @@ export function createTables() {
                     }
                     console.log('[localDatabase.js] Tabela "users" verificada/criada.');
                     
-                    if(errPecas) return reject(new Error("Falha ao criar tabela pecas (ver log acima), mas users pode ter sido criada."));
+                    if(errPecas && !errUsers) return reject(new Error("Falha ao criar tabela pecas (ver log acima), mas users pode ter sido criada."));
+                    if(errPecas && errUsers) return reject(new Error("Falha ao criar tabela pecas e users. Verifique os logs."));
                     resolve();
                 });
             });
@@ -105,13 +107,8 @@ export function getAllPecas() {
     return new Promise((resolve, reject) => {
         if (!db) { console.error("[localDatabase.js] getAllPecas: DB não conectado."); return reject(new Error("DB não conectado em getAllPecas")); }
         db.all("SELECT * FROM pecas ORDER BY nome ASC", [], (err, rows) => {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em getAllPecas:", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite getAllPecas retornou:", rows ? rows.length : 0, "linhas.");
-                resolve(rows || []);
-            }
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em getAllPecas:", err.message); reject(err); } 
+            else { console.log("[localDatabase.js] SUCESSO SQLite getAllPecas retornou:", rows ? rows.length : 0, "linhas."); resolve(rows || []); }
         });
     });
 }
@@ -122,23 +119,19 @@ export function insertPeca(peca) {
         if (!db) { console.error("[localDatabase.js] insertPeca: DB não conectado."); return reject(new Error("DB não conectado em insertPeca")); }
         const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
         const sql = "INSERT INTO pecas (nome, tipo, fabricante, estoque_atual, estoque_minimo) VALUES (?, ?, ?, ?, ?)";
-        
-        const qNome = nome || '';
+        const qNome = nome ? String(nome).trim() : '';
+        if (!qNome) { const errMsg = "[localDatabase.js] insertPeca: Nome da peça não pode ser vazio."; console.error(errMsg); return reject(new Error("Nome da peça é obrigatório.")); }
         const qTipo = tipo || '';
         const qFabricante = fabricante || '';
-        const qEstoqueAtual = Number.isInteger(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
-        const qEstoqueMinimo = Number.isInteger(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
+        const qEstoqueAtual = Number.isFinite(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
+        const qEstoqueMinimo = Number.isFinite(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
         console.log("[localDatabase.js] insertPeca - Dados para SQL:", [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo]);
-
         db.run(sql, [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo], function(err) {
-            if (err) {
+            if (err) { 
                 console.error("[localDatabase.js] ERRO SQLite ao executar INSERT em 'pecas':", err.message);
-                reject(err);
-            } else {
-                const insertedData = { id: this.lastID, nome: qNome, tipo: qTipo, fabricante: qFabricante, estoque_atual: qEstoqueAtual, estoque_minimo: qEstoqueMinimo };
-                console.log("[localDatabase.js] SUCESSO SQLite INSERT em 'pecas'. Nova linha:", insertedData);
-                resolve(insertedData);
-            }
+                if (err.message.includes("UNIQUE constraint failed: pecas.nome")) { return reject(new Error(`Já existe uma peça com o nome '${qNome}'.`)); }
+                reject(err); 
+            } else { const insertedData = { id: this.lastID, nome: qNome, tipo: qTipo, fabricante: qFabricante, estoque_atual: qEstoqueAtual, estoque_minimo: qEstoqueMinimo }; console.log("[localDatabase.js] SUCESSO SQLite INSERT em 'pecas'. Nova linha:", insertedData); resolve(insertedData); }
         });
     });
 }
@@ -149,20 +142,21 @@ export function updatePeca(id, peca) {
         if (!db) { console.error("[localDatabase.js] updatePeca: DB não conectado."); return reject(new Error("DB não conectado em updatePeca")); }
         const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
         const sql = "UPDATE pecas SET nome = ?, tipo = ?, fabricante = ?, estoque_atual = ?, estoque_minimo = ? WHERE id = ?";
-        const qNome = nome || '';
+        const qNome = nome ? String(nome).trim() : '';
+        if (!qNome) { const errMsg = "[localDatabase.js] updatePeca: Nome da peça não pode ser vazio."; console.error(errMsg); return reject(new Error("Nome da peça é obrigatório.")); }
         const qTipo = tipo || '';
         const qFabricante = fabricante || '';
-        const qEstoqueAtual = Number.isInteger(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
-        const qEstoqueMinimo = Number.isInteger(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
+        const qEstoqueAtual = Number.isFinite(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
+        const qEstoqueMinimo = Number.isFinite(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
         console.log("[localDatabase.js] updatePeca - Dados para SQL:", [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo, id]);
-
         db.run(sql, [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo, id], function(err) {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite ao executar UPDATE em 'pecas':", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite UPDATE em 'pecas'. Alterações:", this.changes);
-                resolve({ changes: this.changes });
+            if (err) { 
+                console.error("[localDatabase.js] ERRO SQLite ao executar UPDATE em 'pecas':", err.message); 
+                if (err.message.includes("UNIQUE constraint failed: pecas.nome")) { return reject(new Error(`Já existe outra peça com o nome '${qNome}'.`)); }
+                reject(err); 
+            } else { 
+                if (this.changes === 0) console.warn(`[localDatabase.js] updatePeca: Nenhuma peça encontrada com ID ${id} para atualizar.`);
+                console.log("[localDatabase.js] SUCESSO SQLite UPDATE em 'pecas'. Alterações:", this.changes); resolve({ changes: this.changes }); 
             }
         });
     });
@@ -173,53 +167,36 @@ export function deletePeca(id) {
     return new Promise((resolve, reject) => {
         if (!db) { console.error("[localDatabase.js] deletePeca: DB não conectado."); return reject(new Error("DB não conectado em deletePeca")); }
         db.run("DELETE FROM pecas WHERE id = ?", [id], function(err) {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em deletePeca:", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite deletePeca. Alterações:", this.changes);
-                resolve({ changes: this.changes });
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em deletePeca:", err.message); reject(err); } 
+            else { 
+                if (this.changes === 0) console.warn(`[localDatabase.js] deletePeca: Nenhuma peça encontrada com ID ${id}.`);
+                console.log("[localDatabase.js] SUCESSO SQLite deletePeca. Alterações:", this.changes); resolve({ changes: this.changes }); 
             }
         });
     });
 }
 
-export function getRequestedPecas() { // Usado pelo App.jsx para o gráfico
+export function getRequestedPecas() {
     console.log("[localDatabase.js] FUNÇÃO getRequestedPecas INICIADA (para gráfico App.jsx)...");
     return new Promise((resolve, reject) => {
         if (!db) { console.error("[localDatabase.js] getRequestedPecas: DB não conectado."); return reject(new Error("DB não conectado em getRequestedPecas")); }
         const sql = `SELECT nome, estoque_atual, estoque_minimo FROM pecas ORDER BY nome ASC`;
         db.all(sql, (err, rows) => {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em getRequestedPecas:", err.message);
-                reject(err);
-            } else {
-                const formattedRows = (rows || []).map(r => ({
-                    nome: r.nome,
-                    quantidade: r.estoque_atual,
-                    estoque_atual: r.estoque_atual,
-                    estoque_minimo: r.estoque_minimo
-                }));
-                console.log("[localDatabase.js] SUCESSO SQLite getRequestedPecas retornou (formatado):", formattedRows.length, "linhas.");
-                resolve(formattedRows);
-            }
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em getRequestedPecas:", err.message); reject(err); } 
+            else { const formattedRows = (rows || []).map(r => ({ nome: r.nome, quantidade: r.estoque_atual, estoque_atual: r.estoque_atual, estoque_minimo: r.estoque_minimo })); console.log("[localDatabase.js] SUCESSO SQLite getRequestedPecas retornou (formatado):", formattedRows.length, "linhas."); resolve(formattedRows); }
         });
     });
 }
 
-// --- Funções para USUÁRIOS --- (mantidas, com logs e verificação de db)
+// --- Funções para USUÁRIOS ---
 export function findUserByUsername(username) {
     console.log("[localDatabase.js] FUNÇÃO findUserByUsername. Usuário:", username);
     return new Promise((resolve, reject) => {
         if (!db) { console.error("[localDatabase.js] findUserByUsername: DB não conectado."); return reject(new Error("DB não conectado em findUserByUsername")); }
         const sql = `SELECT * FROM users WHERE username = ?`;
         db.get(sql, [username], (err, row) => {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em findUserByUsername:", err.message);
-                reject(err);
-            } else {
-                resolve(row);
-            }
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em findUserByUsername:", err.message); reject(err); } 
+            else { resolve(row); }
         });
     });
 }
@@ -230,29 +207,61 @@ export function insertUser(username, passwordHash, role) {
         if (!db) { console.error("[localDatabase.js] insertUser: DB não conectado."); return reject(new Error("DB não conectado em insertUser")); }
         const sql = `INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)`;
         db.run(sql, [username, passwordHash, role], function(err) {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em insertUser:", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite insertUser. ID:", this.lastID);
-                resolve({ id: this.lastID, username, role });
-            }
+            if (err) { 
+                console.error("[localDatabase.js] ERRO SQLite em insertUser:", err.message); 
+                if (err.message.includes("UNIQUE constraint failed: users.username")) {
+                    return reject(new Error(`Nome de usuário '${username}' já existe.`));
+                }
+                reject(err); 
+            } 
+            else { console.log("[localDatabase.js] SUCESSO SQLite insertUser. ID:", this.lastID); resolve({ id: this.lastID, username, role }); }
         });
     });
 }
-// ... (getAllUsers, updateUserRole, deleteUser devem seguir o mesmo padrão de logs e verificação de !db) ...
+
 export function getAllUsers() {
     console.log("[localDatabase.js] FUNÇÃO getAllUsers INICIADA.");
     return new Promise((resolve, reject) => {
         if (!db) { console.error("[localDatabase.js] getAllUsers: DB não conectado."); return reject(new Error("DB não conectado em getAllUsers")); }
-        const sql = `SELECT id, username, role FROM users`;
+        const sql = `SELECT id, username, role FROM users ORDER BY username ASC`;
         db.all(sql, [], (err, rows) => {
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em getAllUsers:", err.message); reject(err); } 
+            else { console.log("[localDatabase.js] SUCESSO SQLite getAllUsers retornou:", rows ? rows.length : 0, "linhas."); resolve(rows || []); }
+        });
+    });
+}
+
+// NOVA FUNÇÃO (da resposta anterior) para buscar usuários por papel específico
+export function getUsersByRole(role) {
+    console.log(`[localDatabase.js] FUNÇÃO getUsersByRole. Buscando usuários com papel: ${role}`);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] getUsersByRole: DB não conectado."); return reject(new Error("DB não conectado em getUsersByRole")); }
+        const sql = `SELECT id, username, role FROM users WHERE role = ? ORDER BY username ASC`;
+        db.all(sql, [role], (err, rows) => {
             if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em getAllUsers:", err.message);
+                console.error(`[localDatabase.js] ERRO SQLite em getUsersByRole para o papel ${role}:`, err.message);
                 reject(err);
             } else {
-                console.log("[localDatabase.js] SUCESSO SQLite getAllUsers retornou:", rows ? rows.length : 0, "linhas.");
+                console.log(`[localDatabase.js] SUCESSO SQLite getUsersByRole para o papel ${role} retornou:`, rows ? rows.length : 0, "linhas.");
                 resolve(rows || []);
+            }
+        });
+    });
+}
+
+export function updateUserPassword(userId, newPasswordHash) {
+    console.log(`[localDatabase.js] FUNÇÃO updateUserPassword. UserID: ${userId}`);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] updateUserPassword: DB não conectado."); return reject(new Error("DB não conectado em updateUserPassword")); }
+        const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
+        db.run(sql, [newPasswordHash, userId], function(err) {
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em updateUserPassword:", err.message); reject(err); } 
+            else { 
+                if (this.changes === 0) {
+                    console.warn(`[localDatabase.js] updateUserPassword: Nenhum usuário encontrado com ID ${userId} para atualizar senha.`);
+                    return reject(new Error(`Usuário com ID ${userId} não encontrado.`));
+                }
+                console.log(`[localDatabase.js] SUCESSO SQLite updateUserPassword para UserID: ${userId}. Alterações: ${this.changes}`); resolve({ changes: this.changes }); 
             }
         });
     });
@@ -264,12 +273,10 @@ export function updateUserRole(id, newRole) {
         if (!db) { console.error("[localDatabase.js] updateUserRole: DB não conectado."); return reject(new Error("DB não conectado em updateUserRole")); }
         const sql = `UPDATE users SET role = ? WHERE id = ?`;
         db.run(sql, [newRole, id], function(err) {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em updateUserRole:", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite updateUserRole. Alterações:", this.changes);
-                resolve({ changes: this.changes });
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em updateUserRole:", err.message); reject(err); } 
+            else { 
+                if (this.changes === 0) console.warn(`[localDatabase.js] updateUserRole: Nenhum usuário encontrado com ID ${id}.`);
+                console.log("[localDatabase.js] SUCESSO SQLite updateUserRole. Alterações:", this.changes); resolve({ changes: this.changes }); 
             }
         });
     });
@@ -281,13 +288,12 @@ export function deleteUser(id) {
         if (!db) { console.error("[localDatabase.js] deleteUser: DB não conectado."); return reject(new Error("DB não conectado em deleteUser")); }
         const sql = `DELETE FROM users WHERE id = ?`;
         db.run(sql, [id], function(err) {
-            if (err) {
-                console.error("[localDatabase.js] ERRO SQLite em deleteUser:", err.message);
-                reject(err);
-            } else {
-                console.log("[localDatabase.js] SUCESSO SQLite deleteUser. Alterações:", this.changes);
-                resolve({ changes: this.changes });
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em deleteUser:", err.message); reject(err); } 
+            else { 
+                if (this.changes === 0) console.warn(`[localDatabase.js] deleteUser: Nenhum usuário encontrado com ID ${id}.`);
+                console.log("[localDatabase.js] SUCESSO SQLite deleteUser. Alterações:", this.changes); resolve({ changes: this.changes }); 
             }
         });
     });
 }
+console.log("[localDatabase.js] Fim do script.");
