@@ -5,7 +5,7 @@ import { app } from 'electron';
 
 const sqlite3 = sqlite3_module.verbose();
 
-console.log("[localDatabase.js] Script carregado. vComGetUsersByRole_FinalCompleto");
+console.log("[localDatabase.js] Script carregado. vComUserManagementCompleto_Final");
 
 let dbPath = null;
 let db;
@@ -65,7 +65,8 @@ export function createTables() {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            role TEXT NOT NULL CHECK(role IN ('administrador', 'gerente', 'funcionario'))
+            role TEXT NOT NULL CHECK(role IN ('administrador', 'gerente', 'funcionario')),
+            can_approve_purchase_orders BOOLEAN DEFAULT 0 NOT NULL 
         );
     `;
 
@@ -90,9 +91,15 @@ export function createTables() {
                         console.error('[localDatabase.js] Erro ao criar/verificar tabela "users":', errUsers.message);
                         return reject(errUsers); 
                     }
-                    console.log('[localDatabase.js] Tabela "users" verificada/criada.');
+                    console.log('[localDatabase.js] Tabela "users" (com can_approve_purchase_orders) verificada/criada.');
                     
-                    if(errPecas && !errUsers) return reject(new Error("Falha ao criar tabela pecas (ver log acima), mas users pode ter sido criada."));
+                    if(errPecas && !errUsers) {
+                        // Se houve erro em pecas mas não em users, ainda podemos ter um problema.
+                        // Considerar se deve rejeitar ou apenas logar e continuar.
+                        // Por segurança, se uma tabela essencial como 'pecas' falhar na criação, pode ser melhor rejeitar.
+                        console.warn("[localDatabase.js] Tabela 'pecas' pode não ter sido criada corretamente, mas 'users' foi.");
+                        // return reject(new Error("Falha ao criar tabela pecas, mas users pode ter sido criada. Verifique os logs."));
+                    }
                     if(errPecas && errUsers) return reject(new Error("Falha ao criar tabela pecas e users. Verifique os logs."));
                     resolve();
                 });
@@ -120,7 +127,7 @@ export function insertPeca(peca) {
         const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
         const sql = "INSERT INTO pecas (nome, tipo, fabricante, estoque_atual, estoque_minimo) VALUES (?, ?, ?, ?, ?)";
         const qNome = nome ? String(nome).trim() : '';
-        if (!qNome) { const errMsg = "[localDatabase.js] insertPeca: Nome da peça não pode ser vazio."; console.error(errMsg); return reject(new Error("Nome da peça é obrigatório.")); }
+        if (!qNome) { const errMsg = "Nome da peça é obrigatório."; console.error("[localDatabase.js] insertPeca:", errMsg); return reject(new Error(errMsg)); }
         const qTipo = tipo || '';
         const qFabricante = fabricante || '';
         const qEstoqueAtual = Number.isFinite(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
@@ -143,7 +150,7 @@ export function updatePeca(id, peca) {
         const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
         const sql = "UPDATE pecas SET nome = ?, tipo = ?, fabricante = ?, estoque_atual = ?, estoque_minimo = ? WHERE id = ?";
         const qNome = nome ? String(nome).trim() : '';
-        if (!qNome) { const errMsg = "[localDatabase.js] updatePeca: Nome da peça não pode ser vazio."; console.error(errMsg); return reject(new Error("Nome da peça é obrigatório.")); }
+        if (!qNome) { const errMsg = "Nome da peça é obrigatório."; console.error("[localDatabase.js] updatePeca:", errMsg); return reject(new Error(errMsg)); }
         const qTipo = tipo || '';
         const qFabricante = fabricante || '';
         const qEstoqueAtual = Number.isFinite(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
@@ -192,8 +199,8 @@ export function getRequestedPecas() {
 export function findUserByUsername(username) {
     console.log("[localDatabase.js] FUNÇÃO findUserByUsername. Usuário:", username);
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] findUserByUsername: DB não conectado."); return reject(new Error("DB não conectado em findUserByUsername")); }
-        const sql = `SELECT * FROM users WHERE username = ?`;
+        if (!db) { console.error("[localDatabase.js] findUserByUsername: DB não conectado."); return reject(new Error("DB não conectado")); }
+        const sql = `SELECT id, username, password_hash, role, can_approve_purchase_orders FROM users WHERE username = ?`;
         db.get(sql, [username], (err, row) => {
             if (err) { console.error("[localDatabase.js] ERRO SQLite em findUserByUsername:", err.message); reject(err); } 
             else { resolve(row); }
@@ -201,20 +208,18 @@ export function findUserByUsername(username) {
     });
 }
 
-export function insertUser(username, passwordHash, role) {
-    console.log("[localDatabase.js] FUNÇÃO insertUser. Dados (sem hash):", {username, role});
+export function insertUser(username, passwordHash, role, canApproveOrders = 0) {
+    console.log("[localDatabase.js] FUNÇÃO insertUser. Dados:", {username, role, canApproveOrders});
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] insertUser: DB não conectado."); return reject(new Error("DB não conectado em insertUser")); }
-        const sql = `INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)`;
-        db.run(sql, [username, passwordHash, role], function(err) {
+        if (!db) { console.error("[localDatabase.js] insertUser: DB não conectado."); return reject(new Error("DB não conectado")); }
+        const sql = `INSERT INTO users (username, password_hash, role, can_approve_purchase_orders) VALUES (?, ?, ?, ?)`;
+        db.run(sql, [username, passwordHash, role, canApproveOrders ? 1 : 0], function(err) {
             if (err) { 
                 console.error("[localDatabase.js] ERRO SQLite em insertUser:", err.message); 
-                if (err.message.includes("UNIQUE constraint failed: users.username")) {
-                    return reject(new Error(`Nome de usuário '${username}' já existe.`));
-                }
+                if (err.message.includes("UNIQUE constraint failed")) { return reject(new Error(`Nome de usuário '${username}' já existe.`));}
                 reject(err); 
             } 
-            else { console.log("[localDatabase.js] SUCESSO SQLite insertUser. ID:", this.lastID); resolve({ id: this.lastID, username, role }); }
+            else { const newUser = { id: this.lastID, username, role, can_approve_purchase_orders: canApproveOrders ? 1 : 0 }; console.log("[localDatabase.js] SUCESSO SQLite insertUser. ID:", this.lastID, "Novo usuário:", newUser); resolve(newUser); }
         });
     });
 }
@@ -222,8 +227,8 @@ export function insertUser(username, passwordHash, role) {
 export function getAllUsers() {
     console.log("[localDatabase.js] FUNÇÃO getAllUsers INICIADA.");
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] getAllUsers: DB não conectado."); return reject(new Error("DB não conectado em getAllUsers")); }
-        const sql = `SELECT id, username, role FROM users ORDER BY username ASC`;
+        if (!db) { console.error("[localDatabase.js] getAllUsers: DB não conectado."); return reject(new Error("DB não conectado")); }
+        const sql = `SELECT id, username, role, can_approve_purchase_orders FROM users ORDER BY username ASC`;
         db.all(sql, [], (err, rows) => {
             if (err) { console.error("[localDatabase.js] ERRO SQLite em getAllUsers:", err.message); reject(err); } 
             else { console.log("[localDatabase.js] SUCESSO SQLite getAllUsers retornou:", rows ? rows.length : 0, "linhas."); resolve(rows || []); }
@@ -231,20 +236,14 @@ export function getAllUsers() {
     });
 }
 
-// NOVA FUNÇÃO (da resposta anterior) para buscar usuários por papel específico
 export function getUsersByRole(role) {
-    console.log(`[localDatabase.js] FUNÇÃO getUsersByRole. Buscando usuários com papel: ${role}`);
+    console.log(`[localDatabase.js] FUNÇÃO getUsersByRole. Buscando papel: ${role}`);
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] getUsersByRole: DB não conectado."); return reject(new Error("DB não conectado em getUsersByRole")); }
-        const sql = `SELECT id, username, role FROM users WHERE role = ? ORDER BY username ASC`;
+        if (!db) { console.error("[localDatabase.js] getUsersByRole: DB não conectado."); return reject(new Error("DB não conectado")); }
+        const sql = `SELECT id, username, role, can_approve_purchase_orders FROM users WHERE role = ? ORDER BY username ASC`;
         db.all(sql, [role], (err, rows) => {
-            if (err) {
-                console.error(`[localDatabase.js] ERRO SQLite em getUsersByRole para o papel ${role}:`, err.message);
-                reject(err);
-            } else {
-                console.log(`[localDatabase.js] SUCESSO SQLite getUsersByRole para o papel ${role} retornou:`, rows ? rows.length : 0, "linhas.");
-                resolve(rows || []);
-            }
+            if (err) { console.error(`[localDatabase.js] ERRO SQLite em getUsersByRole (${role}):`, err.message); reject(err); } 
+            else { console.log(`[localDatabase.js] SUCESSO SQLite getUsersByRole (${role}) retornou:`, rows ? rows.length : 0, "linhas."); resolve(rows || []); }
         });
     });
 }
@@ -252,31 +251,78 @@ export function getUsersByRole(role) {
 export function updateUserPassword(userId, newPasswordHash) {
     console.log(`[localDatabase.js] FUNÇÃO updateUserPassword. UserID: ${userId}`);
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] updateUserPassword: DB não conectado."); return reject(new Error("DB não conectado em updateUserPassword")); }
+        if (!db) { console.error("[localDatabase.js] updateUserPassword: DB não conectado."); return reject(new Error("DB não conectado")); }
         const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
         db.run(sql, [newPasswordHash, userId], function(err) {
             if (err) { console.error("[localDatabase.js] ERRO SQLite em updateUserPassword:", err.message); reject(err); } 
             else { 
-                if (this.changes === 0) {
-                    console.warn(`[localDatabase.js] updateUserPassword: Nenhum usuário encontrado com ID ${userId} para atualizar senha.`);
-                    return reject(new Error(`Usuário com ID ${userId} não encontrado.`));
-                }
+                if (this.changes === 0) { console.warn(`[localDatabase.js] updateUserPassword: Nenhum usuário encontrado com ID ${userId}.`); return reject(new Error(`Usuário com ID ${userId} não encontrado.`)); }
                 console.log(`[localDatabase.js] SUCESSO SQLite updateUserPassword para UserID: ${userId}. Alterações: ${this.changes}`); resolve({ changes: this.changes }); 
             }
         });
     });
 }
 
-export function updateUserRole(id, newRole) {
-    console.log(`[localDatabase.js] FUNÇÃO updateUserRole. ID: ${id}, Novo Papel: ${newRole}`);
+export function updateUserFullDetails(userId, { username, role, can_approve_purchase_orders }) {
+    console.log(`[localDatabase.js] FUNÇÃO updateUserFullDetails para UserID: ${userId}. Dados:`, { username, role, can_approve_purchase_orders });
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] updateUserRole: DB não conectado."); return reject(new Error("DB não conectado em updateUserRole")); }
-        const sql = `UPDATE users SET role = ? WHERE id = ?`;
-        db.run(sql, [newRole, id], function(err) {
-            if (err) { console.error("[localDatabase.js] ERRO SQLite em updateUserRole:", err.message); reject(err); } 
+        if (!db) { console.error("[localDatabase.js] updateUserFullDetails: DB não conectado."); return reject(new Error("DB não conectado")); }
+
+        let sqlParts = [];
+        let params = [];
+
+        // Apenas adiciona ao UPDATE se o valor foi fornecido (não é undefined)
+        if (username !== undefined) {
+            const trimmedUsername = String(username).trim();
+            if (!trimmedUsername) return reject(new Error("Nome de usuário não pode ser vazio ao atualizar."));
+            sqlParts.push("username = ?");
+            params.push(trimmedUsername);
+        }
+        if (role !== undefined) {
+            if (!['administrador', 'gerente', 'funcionario'].includes(role)) return reject(new Error("Papel inválido fornecido."));
+            sqlParts.push("role = ?");
+            params.push(role);
+        }
+        if (can_approve_purchase_orders !== undefined) {
+            sqlParts.push("can_approve_purchase_orders = ?");
+            params.push(can_approve_purchase_orders ? 1 : 0);
+        }
+
+        if (sqlParts.length === 0) {
+            console.warn("[localDatabase.js] updateUserFullDetails: Nenhum campo válido fornecido para atualização.");
+            return resolve({ changes: 0, message: "Nenhum dado válido para atualizar." });
+        }
+
+        const sql = `UPDATE users SET ${sqlParts.join(", ")} WHERE id = ?`;
+        params.push(userId);
+
+        console.log("[localDatabase.js] updateUserFullDetails - SQL:", sql, "Params:", params);
+        db.run(sql, params, function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em updateUserFullDetails:", err.message);
+                if (err.message.includes("UNIQUE constraint failed: users.username")) {
+                    return reject(new Error(`Nome de usuário '${username}' já está em uso.`));
+                }
+                reject(err);
+            } else {
+                if (this.changes === 0) console.warn(`[localDatabase.js] updateUserFullDetails: Nenhum usuário encontrado com ID ${userId} ou nenhum dado alterado.`);
+                console.log(`[localDatabase.js] SUCESSO SQLite updateUserFullDetails para UserID: ${userId}. Alterações: ${this.changes}`);
+                resolve({ changes: this.changes, message: "Detalhes do usuário atualizados." });
+            }
+        });
+    });
+}
+
+export function adminResetUserPassword(targetUserId, newPasswordHash) {
+    console.log(`[localDatabase.js] FUNÇÃO adminResetUserPassword. Resetando senha para UserID: ${targetUserId}`);
+     return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] adminResetUserPassword: DB não conectado."); return reject(new Error("DB não conectado")); }
+        const sql = `UPDATE users SET password_hash = ? WHERE id = ?`;
+        db.run(sql, [newPasswordHash, targetUserId], function(err) {
+            if (err) { console.error("[localDatabase.js] ERRO SQLite em adminResetUserPassword:", err.message); reject(err); } 
             else { 
-                if (this.changes === 0) console.warn(`[localDatabase.js] updateUserRole: Nenhum usuário encontrado com ID ${id}.`);
-                console.log("[localDatabase.js] SUCESSO SQLite updateUserRole. Alterações:", this.changes); resolve({ changes: this.changes }); 
+                if (this.changes === 0) return reject(new Error(`Usuário alvo com ID ${targetUserId} não encontrado para reset de senha.`));
+                console.log(`[localDatabase.js] SUCESSO SQLite adminResetUserPassword para UserID: ${targetUserId}. Alterações: ${this.changes}`); resolve({ changes: this.changes }); 
             }
         });
     });
@@ -285,7 +331,7 @@ export function updateUserRole(id, newRole) {
 export function deleteUser(id) {
     console.log(`[localDatabase.js] FUNÇÃO deleteUser. ID: ${id}`);
     return new Promise((resolve, reject) => {
-        if (!db) { console.error("[localDatabase.js] deleteUser: DB não conectado."); return reject(new Error("DB não conectado em deleteUser")); }
+        if (!db) { console.error("[localDatabase.js] deleteUser: DB não conectado."); return reject(new Error("DB não conectado")); }
         const sql = `DELETE FROM users WHERE id = ?`;
         db.run(sql, [id], function(err) {
             if (err) { console.error("[localDatabase.js] ERRO SQLite em deleteUser:", err.message); reject(err); } 

@@ -1,13 +1,14 @@
 // src/AlterarSenha.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext'; // Para pegar o usuário logado, se necessário, ou para logout pós-mudança
-import { Button } from './components/ui/button'; // Assumindo que você tem
-import { Input } from './components/ui/input';
-import { Label } from './components/ui/label';
-import styles from './CadastroUsuario.module.css'; // Reutilizando estilos do CadastroUsuario
+import { useAuth } from './AuthContext';
+// Verifique os caminhos para seus componentes de UI
+import { Button } from './components/ui/button.jsx';
+import { Input } from './components/ui/input.jsx';
+import { Label } from './components/ui/label.jsx';
+import styles from './CadastroUsuario.module.css'; // Reutilizando estilos
 
-console.log("AlterarSenha.jsx: Script carregado.");
+console.log("AlterarSenha.jsx: Script carregado (vSemAlertBloqueante).");
 
 export default function AlterarSenha() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -15,19 +16,27 @@ export default function AlterarSenha() {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [mensagem, setMensagem] = useState({ texto: "", tipo: "" });
   const navigate = useNavigate();
-  const { logout } = useAuth(); // Pegar a função de logout para usar após alteração bem sucedida
+  const { logout, usuario } = useAuth();
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
     setMensagem({ texto: "", tipo: "" });
 
+    if (!newPassword || !confirmNewPassword) {
+      setMensagem({ texto: "Nova senha e confirmação são obrigatórias.", tipo: "erro"});
+      return;
+    }
     if (newPassword !== confirmNewPassword) {
       setMensagem({ texto: "A nova senha e a confirmação não coincidem.", tipo: "erro" });
       return;
     }
-    if (newPassword.length < 6) {
+    if (newPassword.length < 6) { 
       setMensagem({ texto: "A nova senha deve ter pelo menos 6 caracteres.", tipo: "erro" });
       return;
+    }
+    if (!currentPassword) { 
+        setMensagem({ texto: "Senha atual é obrigatória.", tipo: "erro"});
+        return;
     }
 
     if (!window.api || !window.api.changePassword) {
@@ -38,20 +47,28 @@ export default function AlterarSenha() {
 
     try {
       console.log("AlterarSenha.jsx: Tentando alterar senha...");
-      const resultado = await window.api.changePassword({ currentPassword, newPassword });
+      const resultado = await window.api.changePassword({ currentPassword, newPassword }); 
       
       if (resultado && resultado.success) {
-        setMensagem({ texto: resultado.message || "Senha alterada com sucesso! Faça login novamente.", tipo: "sucesso" });
+        // A mensagem de sucesso será mostrada brevemente antes do logout
+        setMensagem({ texto: resultado.message || "Senha alterada com sucesso! Você será desconectado.", tipo: "sucesso" });
         setCurrentPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
-        // Forçar logout para o usuário logar com a nova senha
+        
+        // REMOVIDO o alert("Senha alterada com sucesso! ...")
+        
+        // Aguarda um pouco para o usuário ver a mensagem de sucesso, depois faz logout
         setTimeout(async () => {
-            await logout(); // Usa a função logout do AuthContext
-            // O navigate para /login já é feito pelo logout do AuthContext
-        }, 2000);
+            if (logout) { // Verifica se logout está definido
+                await logout(); 
+            } else {
+                console.error("Função logout não disponível no AuthContext");
+                navigate('/login'); // Fallback para navegação se logout falhar
+            }
+        }, 2500); // 2.5 segundos para ler a mensagem
+
       } else {
-        // Isso aconteceria se o backend resolvesse sem 'success:true' mas sem lançar erro
         setMensagem({ texto: resultado.message || "Falha ao alterar senha.", tipo: "erro" });
       }
     } catch (error) {
@@ -61,12 +78,16 @@ export default function AlterarSenha() {
   };
 
   return (
-    <div className={styles.container}> {/* Reutilizando container do CadastroUsuario.module.css */}
-      <div className={styles.contentCard} style={{ maxWidth: '500px', margin: '2rem auto' }}> {/* Card centralizado e com largura máxima */}
+    <div className={styles.container}> 
+      <div className={styles.contentCard} style={{ maxWidth: '500px', margin: '2rem auto' }}> 
         <h1 className={styles.formTitle} style={{ textAlign: 'center', fontSize: '1.5rem' }}>Alterar Minha Senha</h1>
         
         {mensagem.texto && (
-          <p className={`${styles.statusMessage} ${mensagem.tipo === "erro" ? styles.errorMessage : styles.successMessage}`}>
+          <p 
+            className={`${styles.statusMessage} ${mensagem.tipo === "erro" ? styles.errorMessage : styles.successMessage}`}
+            // Adicionando role="alert" para acessibilidade
+            role="alert" 
+          >
             {mensagem.texto}
           </p>
         )}
@@ -81,6 +102,7 @@ export default function AlterarSenha() {
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               required
+              autoFocus // Pode tentar reabilitar o autoFocus aqui, agora que o alert bloqueante se foi
             />
           </div>
           <div className={styles.formGroup}>
@@ -113,10 +135,11 @@ export default function AlterarSenha() {
           </div>
         </form>
         <button 
-            style={{...styles.link, marginTop: '2rem', display: 'block', marginLeft: 'auto', marginRight: 'auto'}} 
-            onClick={() => navigate('/')} // Navega para o Dashboard
+            className={styles.link}
+            style={{ marginTop: '2rem', display: 'block', marginLeft: 'auto', marginRight: 'auto'}} 
+            onClick={() => navigate('/')}
         >
-             Cancelar e Voltar ao Dashboard
+             Cancelar
         </button>
       </div>
     </div>

@@ -3,40 +3,45 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
 import { Home, Package, UserPlus, LogOut, KeyRound } from "lucide-react";
-import "./App.css"; // Ou index.css - seu CSS global
+import "./App.css"; 
 
 import { AuthProvider, useAuth } from './AuthContext.jsx';
 
-import App from "./App.jsx"; // Dashboard principal
-import Cadastro from "./Cadastro.jsx"; // Gerenciamento de Usuários (Admin/Gerente)
+import App from "./App.jsx"; 
+import Cadastro from "./Cadastro.jsx"; 
 import CadastroPeca from "./CadastroPeca.jsx";
 import Login from "./Login.jsx";
-import AlterarSenha from "./AlterarSenha.jsx";
+import AlterarSenha from "./AlterarSenha.jsx"; 
 
-console.log("src/main.jsx (Frontend): Script carregado. vCorrigidoRefError");
+console.log("src/main.jsx (Frontend): Script carregado. vLoginDiretoDashboard");
 
-// Estilos do Menu
-const menuNavStyles = {
+// Estilos do Menu (COPIE DA SUA ÚLTIMA VERSÃO COMPLETA)
+const menuNavStyles = { /* ... */ };
+const menuLinkStyles = { /* ... */ };
+const menuActiveLinkStyles = { /* ... */ };
+// Vou colar um exemplo para manter o arquivo completo:
+const defaultMenuNavStyles = {
     backgroundColor: '#333', color: '#fff', padding: '0.8rem 1rem',
-    display: 'flex', gap: '0.5rem', alignItems: 'center',
+    display: 'flex', gap: '0.5rem', alignItems: 'center', 
     boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, height: '3.5rem'
 };
-const menuLinkStyles = {
+const defaultMenuLinkStyles = {
     display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.8rem',
     borderRadius: '0.25rem', textDecoration: 'none', color: '#ddd',
     transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out', fontSize: '0.9rem'
 };
-const menuActiveLinkStyles = { backgroundColor: '#007bff', color: '#fff' };
+const defaultMenuActiveLinkStyles = { backgroundColor: '#007bff', color: '#fff' };
+
 
 function MenuComponent() {
     const location = useLocation();
     const { usuario, logout } = useAuth();
 
     const getLinkStyle = (path) => {
-        let currentStyle = { ...menuLinkStyles };
+        let currentStyle = { ...defaultMenuLinkStyles }; // Usando os defaults aqui
         if (location.pathname === path || (path !== "/" && location.pathname.startsWith(path) && path.length > 1) ) {
-            currentStyle = { ...currentStyle, ...menuActiveLinkStyles };
+            currentStyle = { ...currentStyle, ...defaultMenuActiveLinkStyles }; // Usando os defaults aqui
         }
         return currentStyle;
     };
@@ -44,7 +49,7 @@ function MenuComponent() {
     if (!usuario) return null; 
 
     return (
-        <nav style={menuNavStyles}>
+        <nav style={defaultMenuNavStyles}> {/* Usando os defaults aqui */}
             <Link to="/" style={getLinkStyle("/")}>
                 <Home size={18} /> Dashboard
             </Link>
@@ -63,7 +68,7 @@ function MenuComponent() {
                 <button
                     onClick={logout}
                     title="Sair do sistema"
-                    style={{ ...menuLinkStyles, backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0.8rem' }}
+                    style={{ ...defaultMenuLinkStyles, backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0.8rem' }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#555'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
@@ -74,7 +79,6 @@ function MenuComponent() {
     );
 }
 
-// Renomeado de volta para RequireAuth
 function RequireAuth({ children }) {
     const { usuario, loadingSession } = useAuth();
     const location = useLocation();
@@ -84,12 +88,12 @@ function RequireAuth({ children }) {
     }
 
     if (!usuario) {
-        return <Navigate to="/login" state={{ from: location }} replace />;
+        // Adicionado replace: true aqui também
+        return <Navigate to="/login" state={{ from: location }} replace />; 
     }
     return children;
 }
 
-// Renomeado de volta para ApplicationLayout
 function ApplicationLayout() {
     const { usuario, loadingSession } = useAuth();
 
@@ -131,19 +135,15 @@ function ApplicationLayout() {
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
-    console.log("src/main.jsx (Frontend): #root encontrado. Renderizando aplicação...");
     createRoot(rootElement).render(
         <StrictMode>
             <HashRouter>
                 <AuthProvider>
-                    {/* Usando ApplicationLayout (sem o "Full") */}
-                    <ApplicationLayout /> 
+                    <ApplicationLayout />
                 </AuthProvider>
             </HashRouter>
         </StrictMode>
     );
-    console.log("src/main.jsx (Frontend): Render da aplicação completa chamado.");
 } else {
     console.error("src/main.jsx (Frontend): ERRO CRÍTICO - #root não encontrado no DOM!");
-    document.body.innerHTML = '<div style="color: red; font-size: 24px; padding: 20px;">ERRO: #root não encontrado!</div>';
 }

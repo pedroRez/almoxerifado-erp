@@ -1,48 +1,39 @@
 // src/Login.jsx
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext'; // Importa o hook useAuth
+import { useAuth } from './AuthContext';
 
-console.log("Login.jsx: Script carregado.");
+console.log("Login.jsx: Script carregado (vSemAutoFocus).");
 
 export default function Login() {
   const [username, setUsername] = useState('');
   const [senha, setSenha] = useState('');
-  const [mensagem, setMensagem] = useState('');
+  const [mensagem, setMensagem] = useState({ texto: "", tipo: "" }); // Permitir tipo para estilização de erro/sucesso
   const { login } = useAuth();
 
   async function handleLoginSubmit(e) {
     e.preventDefault();
-    setMensagem('');
+    setMensagem({ texto: "", tipo: "" }); // Limpa mensagem ao tentar de novo
     console.log("Login.jsx: Tentando login com usuário:", username);
 
     try {
       await login({ username: username, password: senha });
-      console.log("Login.jsx: Chamada de login do AuthContext bem-sucedida (navegação deve ocorrer).");
-      // A navegação é feita dentro da função 'login' do AuthContext
+      // A navegação é feita pelo AuthContext
     } catch (error) {
       console.error('Login.jsx: Erro durante a tentativa de login:', error);
-      setMensagem(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      setMensagem({ texto: error.message || 'Erro ao fazer login. Verifique suas credenciais.', tipo: "erro"});
     }
   }
 
   return (
     <div style={{
-      height: '100vh',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      background: '#121212',
-      color: '#fff',
+      height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center',
+      background: '#121212', color: '#fff',
     }}>
       <div style={{
-        width: 400,
-        padding: '2rem',
-        borderRadius: 10,
-        background: '#1e1e1e',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
-        textAlign: 'center',
+        width: 400, padding: '2rem', borderRadius: 10, background: '#1e1e1e',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)', textAlign: 'center',
       }}>
-        <h1 style={{ marginBottom: '1.5rem', color: '#00bcd4', fontSize: '2rem' }}>Almoxerifado ERP</h1>
+        <h1 style={{ marginBottom: '1.5rem', color: '#00bcd4', fontSize: '2rem' }}>Almoxarifado ERP</h1>
         <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <input
             type="text"
@@ -50,7 +41,7 @@ export default function Login() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            autoFocus
+            // autoFocus // REMOVIDO TEMPORARIAMENTE PARA TESTE
             style={{ padding: '0.75rem', background: '#2c2c2c', color: '#fff', border: '1px solid #444', borderRadius: 5, fontSize: '1rem' }}
           />
           <input
@@ -68,15 +59,13 @@ export default function Login() {
             Entrar
           </button>
         </form>
-        {mensagem && (
+        {mensagem.texto && (
           <p style={{
-            marginTop: '1rem',
-            padding: '0.5rem',
-            borderRadius: '4px',
-            backgroundColor: mensagem.toLowerCase().startsWith('erro') || mensagem.toLowerCase().startsWith('falha') ? '#ff6b6b' : '#ddffdd',
-            color: mensagem.toLowerCase().startsWith('erro') || mensagem.toLowerCase().startsWith('falha') ? '#fff' : '#121212',
+            marginTop: '1rem', padding: '0.5rem', borderRadius: '4px',
+            backgroundColor: mensagem.tipo === "erro" ? '#ff6b6b' : '#ddffdd',
+            color: mensagem.tipo === "erro" ? '#fff' : '#121212',
           }}>
-            {mensagem}
+            {mensagem.texto}
           </p>
         )}
       </div>

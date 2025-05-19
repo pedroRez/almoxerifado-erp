@@ -1,8 +1,9 @@
 // src/AuthContext.jsx
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } // Removido useLocation daqui, pois não vamos mais usar location.state.from no login
+from 'react-router-dom';
 
-console.log("AuthContext.jsx: Script carregado.");
+console.log("AuthContext.jsx: Script carregado (vComLoginDiretoDashboard).");
 
 const AuthContext = createContext(null);
 
@@ -10,7 +11,6 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const navigate = useNavigate();
-  const location = useLocation(); // Para obter a rota de origem ao redirecionar do login
 
   useEffect(() => {
     let isMounted = true;
@@ -21,25 +21,23 @@ export function AuthProvider({ children }) {
           const session = await window.api.getSession();
           if (isMounted) {
             if (session && session.id) {
-              console.log("AuthContext: Sessão ativa encontrada na inicialização:", session);
               setUsuario(session);
             } else {
-              console.log("AuthContext: Nenhuma sessão ativa na inicialização.");
               setUsuario(null);
             }
           }
         } catch (error) {
-          console.error("AuthContext: Erro ao buscar sessão na inicialização:", error);
           if (isMounted) setUsuario(null);
+          console.error("AuthContext: Erro ao buscar sessão:", error);
         } finally {
           if (isMounted) setLoadingSession(false);
         }
       } else {
-        console.error("AuthContext: window.api.getSession não disponível na inicialização.");
         if (isMounted) {
             setUsuario(null);
             setLoadingSession(false);
         }
+        console.error("AuthContext: window.api.getSession não disponível.");
       }
     }
     checkSession();
@@ -57,17 +55,15 @@ export function AuthProvider({ children }) {
       if (userSession && userSession.id) {
         setUsuario(userSession);
         console.log("AuthContext: Login bem-sucedido, usuário:", userSession);
-        const from = location.state?.from?.pathname || "/"; // Redireciona para rota anterior ou home
-        navigate(from, { replace: true });
+        // SEMPRE NAVEGA PARA O DASHBOARD (/) APÓS LOGIN
+        navigate('/', { replace: true }); 
         return userSession;
       }
-      // O backend deve lançar erro se o login falhar, que será pego no catch abaixo.
-      // Mas, por via das dúvidas:
       throw new Error('Falha ao obter dados do usuário válidos após login.');
     } catch (error) {
       console.error("AuthContext: Erro na função login:", error);
-      setUsuario(null); // Garante que usuário é null em caso de falha
-      throw error; // Re-lança o erro para o componente Login tratar (ex: mostrar mensagem)
+      setUsuario(null);
+      throw error;
     }
   };
 
@@ -76,7 +72,7 @@ export function AuthProvider({ children }) {
     if (!window.api || !window.api.logout) {
       console.error("AuthContext: window.api.logout não disponível.");
       setUsuario(null);
-      navigate('/login');
+      navigate('/login', { replace: true }); // Garante navegação para login
       return;
     }
     try {
@@ -85,9 +81,8 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error("AuthContext: Erro no logout via API:", error);
     } finally {
-      // Sempre limpa o usuário e navega para login, mesmo se o logout da API falhar
       setUsuario(null);
-      navigate('/login', { replace: true });
+      navigate('/login', { replace: true }); // Sempre navega para /login
     }
   };
 
@@ -96,9 +91,6 @@ export function AuthProvider({ children }) {
     loadingSession,
     login,
     logout,
-    // setUsuario // Expor setUsuario diretamente é geralmente evitado; ações como login/logout devem gerenciá-lo.
-                // Se Login.jsx ainda precisar dele diretamente, pode ser um sinal para refatorar Login.jsx
-                // para usar a função login do contexto.
   };
 
   return (
@@ -114,7 +106,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) { // Alterado para undefined, pois null é um valor válido inicial para o contexto
+  if (context === undefined) {
     throw new Error('useAuth deve ser usado dentro de um AuthProvider');
   }
   return context;

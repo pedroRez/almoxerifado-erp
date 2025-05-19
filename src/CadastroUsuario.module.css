@@ -203,3 +203,17 @@
 .link:hover {
   color: #22d3ee;
 }
+.checkbox {
+  /* Estilo simples para o checkbox, você pode melhorar */
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.formGroup[style*="flex-direction: row"] .label { 
+  /* Ajuste para labels ao lado de checkboxes */
+  margin-bottom: 0; 
+  cursor: pointer;
+}
