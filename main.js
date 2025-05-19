@@ -7,7 +7,7 @@ import crypto from 'crypto';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log("--- MAIN.JS INICIADO (vComPermissaoFinanceiraFlexivel) ---");
+console.log("--- MAIN.JS INICIADO (vComUserManagementTotal) ---");
 
 import {
     connectDatabase, createTables, getAllPecas,
@@ -23,8 +23,6 @@ import {
 
 let currentUserSession = null;
 
-// Funções hashPassword, verifyPassword, initializeAppDatabaseAndUser, createWindow
-// (COPIE O CORPO COMPLETO DESTAS FUNÇÕES DA ÚLTIMA VERSÃO COMPLETA DO MAIN.JS QUE ENVIEI)
 function hashPassword(password) {
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
@@ -32,9 +30,9 @@ function hashPassword(password) {
 }
 
 function verifyPassword(storedPasswordHash, providedPassword) {
-    if (!storedPasswordHash || !providedPassword) { console.warn("[MAIN PROCESS] verifyPassword: hash ou senha ausentes."); return false; }
+    if (!storedPasswordHash || !providedPassword) return false;
     const parts = storedPasswordHash.split(':');
-    if (parts.length !== 2) { console.warn("[MAIN PROCESS] verifyPassword: formato do hash inválido."); return false; }
+    if (parts.length !== 2) return false;
     const [salt, key] = parts;
     try {
         const hash = crypto.pbkdf2Sync(providedPassword, salt, 1000, 64, 'sha512').toString('hex');
@@ -48,7 +46,7 @@ function verifyPassword(storedPasswordHash, providedPassword) {
 async function initializeAppDatabaseAndUser() {
     console.log("[MAIN PROCESS] Iniciando conexão com DB e criação de tabelas...");
     await connectDatabase();
-    await createTables(); // Isso já cria a coluna can_approve_purchase_orders com DEFAULT 0
+    await createTables();
     console.log("[MAIN PROCESS] DB conectado e tabelas verificadas/criadas.");
 
     console.log("[MAIN PROCESS] Verificando/Criando usuário master 'admin'...");
@@ -60,14 +58,12 @@ async function initializeAppDatabaseAndUser() {
             const masterPassword = 'admin'; // MUDE EM PRODUÇÃO!
             const masterRole = 'administrador';
             const hashedPassword = hashPassword(masterPassword);
-            // Admin master DEVE poder aprovar pedidos
-            await dbModuleInsertUser(masterUsername, hashedPassword, masterRole, 1); // 1 para true
+            await dbModuleInsertUser(masterUsername, hashedPassword, masterRole, 1); // Admin master pode aprovar pedidos
             console.log(`[MAIN PROCESS] Usuário master '${masterUsername}' criado com can_approve_purchase_orders=true. ATENÇÃO: SENHA PADRÃO!`);
         } else {
             console.log("[MAIN PROCESS] Usuário 'admin' já existe.");
-            // Opcional: verificar se o admin existente tem can_approve_purchase_orders e setar se não tiver
-            if (adminUser.can_approve_purchase_orders !== 1) {
-                console.log("[MAIN PROCESS] Atualizando admin existente para poder aprovar pedidos.");
+            if (adminUser.can_approve_purchase_orders !== 1 && adminUser.id === 1) { // Garante que o admin master ID 1 tenha a permissão
+                console.log("[MAIN PROCESS] Atualizando admin master (ID 1) para poder aprovar pedidos.");
                 await dbModuleUpdateUserFullDetails(adminUser.id, { can_approve_purchase_orders: 1 });
             }
         }
@@ -94,7 +90,6 @@ function createWindow() {
     }
 }
 
-
 app.whenReady().then(async () => {
     console.log("[MAIN PROCESS] App pronto. Inicializando DB...");
     try {
@@ -108,14 +103,14 @@ app.whenReady().then(async () => {
         return;
     }
 
-    // --- IPC Handlers para Peças (MANTENHA OS DA ÚLTIMA VERSÃO COMPLETA) ---
-    ipcMain.handle('pecas:fetch-all', async () => { try { return await getAllPecas(); } catch (e) {console.error(e.message); throw e;} });
-    ipcMain.handle('pecas:insert', async (event, peca) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleInsertPeca(peca); } catch (e) {console.error(e.message); throw e;} });
-    ipcMain.handle('pecas:update', async (event, id, peca) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleUpdatePeca(id, peca); } catch (e) {console.error(e.message); throw e;} });
-    ipcMain.handle('pecas:delete', async (event, id) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleDeletePeca(id); } catch (e) {console.error(e.message); throw e;} });
-    ipcMain.handle('pecas:fetch-requested', async () => { try { return await getRequestedPecas(); } catch (e) {console.error(e.message); throw e;} });
+    // --- IPC Handlers para Peças ---
+    ipcMain.handle('pecas:fetch-all', async () => { try { return await getAllPecas(); } catch (e) {console.error("[IPC:pecas:fetch-all] Erro:", e.message); throw e;} });
+    ipcMain.handle('pecas:insert', async (event, peca) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleInsertPeca(peca); } catch (e) {console.error("[IPC:pecas:insert] Erro:", e.message); throw e;} });
+    ipcMain.handle('pecas:update', async (event, id, peca) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleUpdatePeca(id, peca); } catch (e) {console.error("[IPC:pecas:update] Erro:", e.message); throw e;} });
+    ipcMain.handle('pecas:delete', async (event, id) => { if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) throw new Error("Acesso negado."); try { return await dbModuleDeletePeca(id); } catch (e) {console.error("[IPC:pecas:delete] Erro:", e.message); throw e;} });
+    ipcMain.handle('pecas:fetch-requested', async () => { try { return await getRequestedPecas(); } catch (e) {console.error("[IPC:pecas:fetch-requested] Erro:", e.message); throw e;} });
 
-    // --- IPC Handlers para Autenticação (MANTENHA OS DA ÚLTIMA VERSÃO COMPLETA) ---
+    // --- IPC Handlers para Autenticação ---
     ipcMain.handle('auth:login', async (event, { username, password }) => {
         try {
             const user = await findUserByUsername(username);
@@ -123,9 +118,9 @@ app.whenReady().then(async () => {
             currentUserSession = { id: user.id, username: user.username, role: user.role, can_approve_purchase_orders: Boolean(user.can_approve_purchase_orders) };
             console.log(`[MAIN PROCESS] Usuário ${username} logado. Sessão:`, currentUserSession);
             return currentUserSession;
-        } catch (error) { currentUserSession = null; console.error(error.message); throw error; }
+        } catch (error) { currentUserSession = null; console.error(`[IPC:auth:login] Erro para ${username}: ${error.message}`); throw error; }
     });
-    ipcMain.handle('auth:logout', async () => { currentUserSession = null; console.log("[MAIN PROCESS] Usuário deslogado."); return { success: true }; });
+    ipcMain.handle('auth:logout', async () => { const username = currentUserSession?.username; currentUserSession = null; console.log(`[MAIN PROCESS] Usuário ${username || '(nenhum)'} deslogado.`); return { success: true }; });
     ipcMain.handle('auth:get-session', async () => { return currentUserSession; });
     ipcMain.handle('auth:change-password', async (event, { currentPassword, newPassword }) => {
         if (!currentUserSession?.id) throw new Error("Nenhum usuário logado.");
@@ -136,39 +131,35 @@ app.whenReady().then(async () => {
             const newPasswordHash = hashPassword(newPassword);
             await dbModuleUpdateUserPassword(currentUserSession.id, newPasswordHash);
             return { success: true, message: "Senha alterada!" };
-        } catch (error) { console.error(error.message); throw error; }
+        } catch (error) { console.error(`[IPC:auth:change-password] Erro para ${currentUserSession.username}:`, error); throw error; }
     });
 
     // --- IPC Handlers para GERENCIAMENTO DE USUÁRIOS ---
     ipcMain.handle('users:create', async (event, { username, password, role, can_approve_purchase_orders }) => {
         console.log("[MAIN PROCESS] IPC 'users:create' - Dados:", {username, role, can_approve_purchase_orders});
-        // Permissão para criar: Admin ou Gerente
         if (!currentUserSession || !['administrador', 'gerente'].includes(currentUserSession.role)) {
-            throw new Error("Acesso negado: Apenas Admins ou Gerentes podem criar usuários.");
+            throw new Error("Acesso negado: Criar usuários é permitido apenas para Administradores ou Gerentes.");
         }
-        // Regras de criação baseadas no papel de quem cria:
+
+        let finalRole = role;
+        let finalCanApprove = can_approve_purchase_orders ? 1 : 0;
+
         if (currentUserSession.role === 'gerente') {
             if (role === 'administrador' || role === 'gerente') {
                 throw new Error("Acesso negado: Gerentes podem criar apenas usuários 'funcionário'.");
             }
-            // Gerente não pode definir 'can_approve_purchase_orders' para true. Será sempre false.
-            if (can_approve_purchase_orders === true || can_approve_purchase_orders === 1) {
-                 console.warn("[MAIN PROCESS] 'users:create' - Gerente tentou criar usuário com permissão de aprovar. Será ignorado e setado para false.");
-            }
+            finalRole = 'funcionario'; // Garante que gerente só crie funcionário
+            finalCanApprove = 0; // Gerente não pode dar permissão de aprovar financeiro
+            console.log("[MAIN PROCESS] 'users:create' - Gerente criando. Forçando papel para 'funcionario' e can_approve_purchase_orders para false.");
         }
+        // Admin pode criar qualquer papel e definir can_approve_purchase_orders
         
         try {
             const existingUser = await findUserByUsername(username);
             if (existingUser) throw new Error(`Nome de usuário '${username}' já existe.`);
             
             const hashedPassword = hashPassword(password);
-            
-            let final_can_approve = (can_approve_purchase_orders === true || can_approve_purchase_orders === 1) ? 1 : 0;
-            if (currentUserSession.role === 'gerente') {
-                final_can_approve = 0; // Gerente sempre cria com can_approve_purchase_orders = false
-            }
-
-            return await dbModuleInsertUser(username, hashedPassword, role, final_can_approve);
+            return await dbModuleInsertUser(username, hashedPassword, finalRole, finalCanApprove);
         } catch (error) {
             console.error("[IPC:users:create] Erro:", error.message);
             throw error;
@@ -193,17 +184,14 @@ app.whenReady().then(async () => {
     ipcMain.handle('users:update-details', async (event, { userId, username, role, can_approve_purchase_orders }) => {
         console.log("[MAIN PROCESS] IPC 'users:update-details' para UserID:", userId, "Dados:", {username, role, can_approve_purchase_orders});
         if (currentUserSession?.role !== 'administrador') {
-            throw new Error("Acesso negado: Apenas administradores podem atualizar detalhes de usuários.");
+            throw new Error("Acesso negado: Apenas administradores podem atualizar detalhes.");
         }
-        // Proteções para o admin master (ID 1)
         if (Number(userId) === 1 && role && role !== 'administrador') {
-             throw new Error("O administrador principal (ID 1) não pode ter seu papel alterado para não-administrador.");
+             throw new Error("O administrador principal não pode ter seu papel alterado para não-administrador.");
         }
         if (Number(userId) === 1 && (can_approve_purchase_orders === false || can_approve_purchase_orders === 0) ) {
-             throw new Error("O administrador principal (ID 1) deve manter a permissão de aprovar pedidos.");
+             throw new Error("O administrador principal deve manter a permissão de aprovar pedidos.");
         }
-        // Proteção para o admin não se rebaixar se for o único admin (mais complexo, omitido por enquanto)
-        // if (Number(userId) === currentUserSession.id && role && role !== 'administrador') { ... }
         try {
             if (username) {
                 const targetUser = await findUserByUsername(username);
