@@ -1,138 +1,273 @@
+/* CadastroPeca.module.css (AJUSTADO PARA LARGURA DA TABELA) */
 .container {
-  min-height: 100vh;
-  background-color: #121212;
+  min-height: calc(100vh - 5rem); /* Considerando o menu global do AppLayout */
+  background-color: #121212; 
   color: #fff;
-  padding: 1rem;
+  /* Ajuste o padding aqui:
+     padding: 1rem 2rem; (original)
+     padding: 1rem 0.5rem; (padding horizontal menor)
+     ou padding: 1rem 0; (sem padding horizontal neste container, se o App.jsx já tiver)
+     Vamos tentar com um padding horizontal menor.
+  */
+  padding: 1rem 0.5rem; /* Padding horizontal reduzido */
+  box-sizing: border-box;
 }
 
 .nav {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start; 
   align-items: center;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background-color: #333;
-  border-radius: 0.25rem;
+  margin-bottom: 1.5rem; 
+  padding: 0.75rem 1rem; 
+  background-color: #1e1e1e; 
+  border-radius: 8px; 
+  border: 1px solid #333;
 }
 
-.navTitle {
-  font-size: 1.25rem;
-  font-weight: bold;
+.navTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navIcon {
   color: #00bcd4;
 }
 
-.navButton {
-  color: #ddd;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-  background-color: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.navButton:hover {
-  background-color: #555;
-  color: #fff;
+.navTitle {
+  font-size: 1.5rem; 
+  font-weight: 600; 
+  color: #e0e0e0; 
 }
 
 .tabsList {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  display: flex; 
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #333;
 }
 
 .tabTrigger {
-  background-color: #333;
-  color: #fff;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
+  background-color: transparent;
+  color: #aaa; 
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px 6px 0 0; 
   cursor: pointer;
   text-align: center;
   border: none;
   outline: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-bottom: 2px solid transparent; 
+  margin-bottom: -2px; 
+}
+
+.tabTrigger:hover {
+  color: #fff;
+  background-color: #2a2a2a;
 }
 
 .tabTriggerActive {
-  background-color: #007bff;
+  background-color: #1e1e1e; 
+  color: #00bcd4; 
+  border-color: #00bcd4; 
 }
 
 .tabsContent {
-  margin-top: 1rem;
+  margin-top: 0;
+}
+
+.card {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 1.5rem; 
+  margin-bottom: 1.5rem; 
+  border: 1px solid #333;
+  width: 100%; /* Garante que o card tente usar a largura disponível */
+  box-sizing: border-box;
+}
+.cardContent {
+  /* Seus componentes CardContent podem ou não precisar de padding aqui */
+}
+
+.formContainer { 
+  max-width: 700px; 
+  margin: 1rem auto; 
 }
 
 .form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-top: 1rem;
+  display: flex; 
+  flex-direction: column;
+  gap: 1.25rem;
 }
+
+.formRow {
+  display: flex; 
+  gap: 1.25rem; 
+  align-items: flex-start; 
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1; 
+}
+.formGroupFlex1 { flex: 1; }
+.formGroupFlex2 { flex: 2; }
 
 .label {
   display: block;
   margin-bottom: 0.25rem;
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #bbb;
+  text-align: left;
 }
 
 .input {
-  padding: 0.5rem;
-  border-radius: 0.25rem;
-  background-color: #444;
-  color: #fff;
-  border: 1px solid #666;
+  padding: 0.75rem;
+  border-radius: 6px;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
   width: 100%;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.3);
+}
+
+.submitButtonContainer {
+  display: flex;
+  justify-content: flex-end; 
+  margin-top: 1rem;
 }
 
 .submitButton {
   background-color: #007bff;
   color: #fff;
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.25rem;
+  padding: 0.75rem 1.5rem; 
+  border-radius: 6px;
   border: none;
   cursor: pointer;
-  margin-top: 1rem;
-  grid-column: '1 / -1';
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
+  width: auto; 
+  min-width: 150px; 
+}
+.submitButton:hover {
+  background-color: #0056b3;
 }
 
 .table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  width: 100%; /* Tabela ocupa 100% do seu contêiner (o Card) */
+  border-collapse: separate;
+  border-spacing: 0;
+  /* margin-top: 1rem; */ /* Removido, pois o Card já tem padding/margem */
+  /* border-radius: 8px; */ /* O Card já tem borda arredondada */
+  /* overflow: hidden; */
 }
 
 .th {
-  background-color: #555;
-  color: #fff;
-  padding: 0.75rem;
-  text-align: left;
+  background-color: #2c2c2c !important; 
+  color: #00bcd4 !important; 
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #444;
+  vertical-align: middle;
+  text-align: left; 
+  /* Padding já vem do componente TableHead (px-4 py-3) */
+}
+
+.thNumeric {
+  text-align: right !important; 
 }
 
 .td {
+  border-bottom: 1px solid #2c2c2c;
+  font-size: 0.95rem;
+  color: #ccc;
+  vertical-align: middle; 
+  text-align: left; 
+  /* Padding já vem do componente TableCell (px-4 py-3) */
+}
+
+.tdNumeric {
+  text-align: right !important; 
+}
+
+.actionsHeader { 
+  text-align: right !important;
+  min-width: 200px; /* Ajuste conforme necessário para os botões caberem */
+  /* width: 200px; */ /* Evitar width fixo se possível, usar min-width */
+}
+
+.actions { 
+  display: flex !important; 
+  gap: 0.5rem !important; 
+  justify-content: flex-end !important; 
+  align-items: center !important;
+}
+
+.actionButton {
+  display: inline-flex !important; 
+  align-items: center;
+  gap: 0.4rem !important; 
+  flex-shrink: 0; /* Impede que encolham demais */
+  /* Estilos de padding/font-size já vêm do componente Button variant="sm" */
+}
+
+.statusMessage {
+  text-align: center;
   padding: 0.75rem;
-  border-bottom: 1px solid #444;
+  margin: 1rem 0;
+  border-radius: 6px;
+  font-weight: 500;
+}
+.errorMessage {
+  color: #fff;
+  background-color: #d32f2f;
+  border: 1px solid #b71c1c;
+}
+.successMessage {
+  color: #121212;
+  background-color: #a5d6a7;
+  border: 1px solid #388e3c;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  justify-content: flex-end;
+.emptyTableCell {
+  text-align: center !important; /* Garante centralização */
+  color: #777;
+  font-style: italic;
+  padding: 2rem 0 !important; /* Padding vertical apenas */
 }
 
-.graficoContainer {
-  background-color: #333;
-  padding: 1rem;
-  border-radius: 0.25rem;
-  margin-top: 1rem;
-}
-
-.graficoTitulo {
-  font-size: 1.1rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.formTitle {
   color: #00bcd4;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.graficoCard {
+  margin-top: 2rem;
+}
+.chartTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #00bcd4;
+  text-align: left;
 }

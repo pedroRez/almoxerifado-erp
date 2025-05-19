@@ -1,41 +1,29 @@
+// src/Login.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from './supabase';
+import { useAuth } from './AuthContext'; // Importa o hook useAuth
 
-export default function Login({ setUsuario }) {
-  const [email, setEmail] = useState('');
+console.log("Login.jsx: Script carregado.");
+
+export default function Login() {
+  const [username, setUsername] = useState('');
   const [senha, setSenha] = useState('');
-  const [modo, setModo] = useState('login');
   const [mensagem, setMensagem] = useState('');
-  const navigate = useNavigate();
+  const { login } = useAuth();
 
-  async function login() {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    if (error) setMensagem('Erro ao fazer login: ' + error.message);
-    else {
-      setUsuario(data.user);
-      setMensagem('');
+  async function handleLoginSubmit(e) {
+    e.preventDefault();
+    setMensagem('');
+    console.log("Login.jsx: Tentando login com usuário:", username);
+
+    try {
+      await login({ username: username, password: senha });
+      console.log("Login.jsx: Chamada de login do AuthContext bem-sucedida (navegação deve ocorrer).");
+      // A navegação é feita dentro da função 'login' do AuthContext
+    } catch (error) {
+      console.error('Login.jsx: Erro durante a tentativa de login:', error);
+      setMensagem(error.message || 'Erro ao fazer login. Verifique suas credenciais.');
     }
   }
-
-  async function registrar() {
-    const { error } = await supabase.auth.signUp({ email, password: senha });
-    if (error) setMensagem('Erro ao registrar: ' + error.message);
-    else setMensagem('Usuário registrado! Verifique seu e-mail.');
-  }
-
-  async function recuperarSenha() {
-    const { error } = await supabase.auth.resetPasswordForEmail(email);
-    if (error) setMensagem('Erro ao recuperar senha: ' + error.message);
-    else setMensagem('Email de recuperação enviado!');
-  }
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (modo === 'login') login();
-    else if (modo === 'registro') registrar();
-    else if (modo === 'recuperar') recuperarSenha();
-  };
 
   return (
     <div style={{
@@ -48,51 +36,50 @@ export default function Login({ setUsuario }) {
     }}>
       <div style={{
         width: 400,
-        padding: 20,
+        padding: '2rem',
         borderRadius: 10,
         background: '#1e1e1e',
-        boxShadow: '0 0 15px #000',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
         textAlign: 'center',
       }}>
-        <h1 style={{ marginBottom: 20, color: '#00bcd4' }}>Almoxerifado ERP</h1>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input type="email" placeholder="Email" value={email}
-            onChange={(e) => setEmail(e.target.value)} required
-            style={{ padding: 10, background: '#2c2c2c', color: '#fff', border: '1px solid #444', borderRadius: 5 }} />
-          {modo !== 'recuperar' && (
-            <input type="password" placeholder="Senha" value={senha}
-              onChange={(e) => setSenha(e.target.value)} required
-              style={{ padding: 10, background: '#2c2c2c', color: '#fff', border: '1px solid #444', borderRadius: 5 }} />
-          )}
-          <button type="submit"
-            style={{ padding: 10, backgroundColor: '#00bcd4', color: '#fff', border: 'none', borderRadius: 5 }}>
-            {modo === 'login' ? 'Entrar' : modo === 'registro' ? 'Registrar' : 'Recuperar Senha'}
+        <h1 style={{ marginBottom: '1.5rem', color: '#00bcd4', fontSize: '2rem' }}>Almoxerifado ERP</h1>
+        <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <input
+            type="text"
+            placeholder="Usuário"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoFocus
+            style={{ padding: '0.75rem', background: '#2c2c2c', color: '#fff', border: '1px solid #444', borderRadius: 5, fontSize: '1rem' }}
+          />
+          <input
+            type="password"
+            placeholder="Senha"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+            style={{ padding: '0.75rem', background: '#2c2c2c', color: '#fff', border: '1px solid #444', borderRadius: 5, fontSize: '1rem' }}
+          />
+          <button
+            type="submit"
+            style={{ padding: '0.75rem', backgroundColor: '#00bcd4', color: '#121212', border: 'none', borderRadius: 5, fontSize: '1rem', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            Entrar
           </button>
         </form>
-
-        <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {modo !== 'login' && (
-            <button onClick={() => setModo('login')} style={linkBtn}>Já tem conta? Entrar</button>
-          )}
-          {modo !== 'registro' && (
-            <button onClick={() => navigate('/cadastro')} style={linkBtn}>Criar nova conta</button>
-          )}
-          {modo !== 'recuperar' && (
-            <button onClick={() => setModo('recuperar')} style={linkBtn}>Esqueceu a senha?</button>
-          )}
-        </div>
-
-        {mensagem && <p style={{ marginTop: 15, color: '#00e676' }}>{mensagem}</p>}
+        {mensagem && (
+          <p style={{
+            marginTop: '1rem',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            backgroundColor: mensagem.toLowerCase().startsWith('erro') || mensagem.toLowerCase().startsWith('falha') ? '#ff6b6b' : '#ddffdd',
+            color: mensagem.toLowerCase().startsWith('erro') || mensagem.toLowerCase().startsWith('falha') ? '#fff' : '#121212',
+          }}>
+            {mensagem}
+          </p>
+        )}
       </div>
     </div>
   );
 }
-
-const linkBtn = {
-  background: 'none',
-  color: '#00bcd4',
-  border: 'none',
-  cursor: 'pointer',
-  fontSize: 14,
-  textDecoration: 'underline',
-};

@@ -1,10 +1,45 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-  
+/* Estilos Globais para um tema escuro consistente */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh; /* Garante que o corpo ocupe pelo menos toda a altura da tela */
+  background-color: #121212; /* Seu fundo escuro principal para toda a página */
+  color: #e0e0e0; /* Cor de texto padrão clara para bom contraste */
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif; /* Mantenha sua pilha de fontes preferida */
+  line-height: 1.5;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased; /* Melhor renderização de fontes */
+  -moz-osx-font-smoothing: grayscale;
 }
+
+#root {
+  width: 100%; /* Faz o #root ocupar toda a largura disponível */
+  min-height: 100vh; /* Faz o #root ocupar toda a altura da viewport */
+  display: flex; /* Ajuda se o conteúdo direto do #root precisar preencher a altura */
+  flex-direction: column; /* Se o conteúdo direto do #root for empilhado verticalmente */
+  
+  /* As seguintes propriedades do seu #root original podem ser problemáticas
+     para um layout de tela cheia e tema escuro uniforme.
+     Considere removê-las ou ajustá-las: */
+
+  /* max-width: 1280px; */ /* Isso limitaria seu conteúdo a 1280px de largura,
+                             deixando as laterais com o fundo do body (#121212 agora),
+                             o que pode ser o desejado se quiser um container central.
+                             Se quiser que o conteúdo do #root vá de ponta a ponta, remova ou use 100%. */
+  /* margin: 0 auto; */    /* Usado com max-width para centralizar. */
+  
+  /* padding: 2rem; */     /* Este padding no #root pode criar uma "moldura" interna
+                             mostrando o background do #root (se definido) ou do body.
+                             Pode ser melhor aplicar padding dentro dos layouts específicos
+                             (como o ApplicationLayout ou App.jsx) onde necessário. */
+                             
+  /* text-align: center; */ /* Centralizar texto globalmente no #root pode não ser o ideal.
+                             É melhor controlar o alinhamento dentro de componentes específicos. */
+}
+
+/* Seus estilos existentes podem continuar abaixo, ajustados conforme necessário */
 
 .logo {
   height: 6em;
@@ -35,9 +70,17 @@
 }
 
 .card {
+  /* Este é um estilo genérico .card. Seus componentes <Card> do app
+     provavelmente usam estilos inline ou de um UI library.
+     Pode manter ou remover se não estiver usando esta classe específica. */
   padding: 2em;
 }
 
 .read-the-docs {
   color: #888;
+}
+
+/* Outros estilos globais que você possa querer: */
+button {
+  cursor: pointer; /* Deixa claro que botões são clicáveis */
 }

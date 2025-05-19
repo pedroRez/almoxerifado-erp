@@ -2,13 +2,44 @@
   "name": "almoxerifado-erp",
   "private": true,
   "version": "0.1.0",
-  "main": "main.js",  
+  "description": "Almoxerifado ERP saindo da planilha.",
+  "author": "Pedro Rezende <pedro.rezp3@gmail.com>",
+  "main": "main.js",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"electron .\"",
     "build": "vite build",
+    "electron-build": "electron-builder",
     "lint": "eslint .",
     "preview": "vite preview"
+  },
+  "build": {
+    "appId": "com.seuprojeto.erp",
+    "productName": "AlmoxerifadoERP",
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico",
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "directories": {
+      "output": "dist_electron",
+      "buildResources": "build_resources"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "localDatabase.js",
+      "dist/**",
+      "public/**",
+      "node_modules/**",
+      "package.json"
+    ]
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.4",

@@ -1,183 +1,293 @@
-import sqlite3 from 'sqlite3';
+// localDatabase.js
+import sqlite3_module from 'sqlite3';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { app } from 'electron';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const sqlite3 = sqlite3_module.verbose();
 
-const { verbose } = sqlite3;
-const dbPath = path.resolve(__dirname, 'almoxerifado.db');
+console.log("[localDatabase.js] Script carregado. Versão com inicialização de dbPath atrasada e logs detalhados (v2).");
 
+let dbPath = null;
 let db;
 
-async function connectDatabase() {
-    if (db) return db; // Se já estiver conectado, retorna a instância existente
-    return new Promise((resolve, reject) => {
-        const sqlite = verbose();
-        db = new sqlite.Database(dbPath, (err) => {
-            if (err) {
-                console.error("Erro ao conectar ao banco de dados:", err.message);
-                reject(err);
-            } else {
-                console.log("Conectado ao banco de dados SQLite.");
-                resolve(db);
-            }
-        });
-    });
-}
-
-async function createTables() {
-    const db = await connectDatabase();
-    return new Promise(async (resolve, reject) => {
-        const sqlCreateTableUsers = `
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                role TEXT CHECK (role IN ('gerente', 'funcionario')) NOT NULL
-            );
-        `;
-
-        const sqlCreateTablePecas = `
-            CREATE TABLE IF NOT EXISTS pecas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                tipo TEXT,
-                fabricante TEXT,
-                estoque_atual INTEGER,
-                estoque_minimo INTEGER
-            );
-        `;
-
-        const sqlCreateTableMaquinas = `
-            CREATE TABLE IF NOT EXISTS maquinas (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT,
-                tipo TEXT CHECK (tipo IN ('escavadeira', 'caminhao')),
-                localizacao TEXT,
-                motorista TEXT
-            );
-        `;
-
-        const sqlCreateTableMovimentacoes = `
-            CREATE TABLE IF NOT EXISTS movimentacoes (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                peca_id INTEGER,
-                usuario_id INTEGER,
-                maquina_id INTEGER,
-                tipo TEXT CHECK (tipo IN ('entrada', 'saida')),
-                quantidade INTEGER,
-                data DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (peca_id) REFERENCES pecas(id),
-                FOREIGN KEY (usuario_id) REFERENCES users(id),
-                FOREIGN KEY (maquina_id) REFERENCES maquinas(id)
-            );
-        `;
-
+export function connectDatabase() {
+    if (!dbPath) {
         try {
-            await db.run(sqlCreateTableUsers);
-            await db.run(sqlCreateTablePecas);
-            await db.run(sqlCreateTableMaquinas);
-            await db.run(sqlCreateTableMovimentacoes);
-            console.log("Tabelas criadas (ou já existentes).");
-            resolve();
-        } catch (err) {
-            console.error("Erro ao criar tabelas:", err.message);
-            reject(err);
+            const userDataPath = app.getPath('userData');
+            if (!userDataPath) {
+                console.error("[localDatabase.js] ERRO CRÍTICO: app.getPath('userData') retornou indefinido ou vazio!");
+                return Promise.reject(new Error("Não foi possível obter o caminho userData."));
+            }
+            dbPath = path.join(userDataPath, 'almoxarifado.db');
+            console.log("[localDatabase.js] Caminho do banco de dados definido como:", dbPath);
+        } catch (e) {
+            console.error("[localDatabase.js] ERRO CRÍTICO ao tentar obter userData path:", e);
+            return Promise.reject(e);
         }
-    });
-}
+    }
 
-async function getAllPecas() {
-    const db = await connectDatabase();
+    console.log("[localDatabase.js] Tentando conectar/criar banco de dados em:", dbPath);
     return new Promise((resolve, reject) => {
-        db.all("SELECT * FROM pecas", [], (err, rows) => {
+        db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
             if (err) {
-                console.error("Erro ao buscar todas as peças:", err.message);
+                console.error('[localDatabase.js] Erro ao conectar/criar banco SQLite:', err.message, err);
                 reject(err);
             } else {
-                resolve(rows);
+                console.log('[localDatabase.js] Conectado/criado banco de dados SQLite em:', dbPath);
+                db.run("PRAGMA journal_mode = WAL;", (pragmaErr) => {
+                    if (pragmaErr) {
+                        console.warn("[localDatabase.js] Aviso: Falha ao definir PRAGMA journal_mode = WAL:", pragmaErr.message);
+                    } else {
+                        console.log("[localDatabase.js] PRAGMA journal_mode = WAL definido.");
+                    }
+                    resolve();
+                });
             }
         });
     });
 }
 
-async function insertPeca(peca) {
-    const db = await connectDatabase();
+export function createTables() {
+    console.log("[localDatabase.js] Tentando criar/verificar tabelas...");
+    const createPecasTable = `
+        CREATE TABLE IF NOT EXISTS pecas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            tipo TEXT,
+            fabricante TEXT,
+            estoque_atual INTEGER DEFAULT 0,
+            estoque_minimo INTEGER DEFAULT 0 
+        );
+    `;
+    const createUsersTable = `
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL CHECK(role IN ('administrador', 'gerente', 'funcionario'))
+        );
+    `;
+
     return new Promise((resolve, reject) => {
-        const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
-        db.run("INSERT INTO pecas (nome, tipo, fabricante, estoque_atual, estoque_minimo) VALUES (?, ?, ?, ?, ?)",
-            [nome, tipo, fabricante, estoque_atual, estoque_minimo],
-            function (err) {
-                if (err) {
-                    console.error("Erro ao inserir peça:", err.message);
+        if (!db) {
+            const errMessage = "[localDatabase.js] ERRO: Banco de dados não conectado antes de chamar createTables.";
+            console.error(errMessage);
+            return reject(new Error(errMessage));
+        }
+        db.serialize(() => {
+            console.log("[localDatabase.js] Executando CREATE TABLE para 'pecas'...");
+            db.run(createPecasTable, (errPecas) => {
+                if (errPecas) {
+                    console.error('[localDatabase.js] Erro ao criar/verificar tabela "pecas":', errPecas.message);
                 } else {
-                    resolve(this.lastID); // Retorna o ID da última inserção
+                    console.log('[localDatabase.js] Tabela "pecas" (estrutura com estoque_atual) verificada/criada.');
                 }
+                
+                console.log("[localDatabase.js] Executando CREATE TABLE para 'users'...");
+                db.run(createUsersTable, (errUsers) => {
+                    if (errUsers) {
+                        console.error('[localDatabase.js] Erro ao criar/verificar tabela "users":', errUsers.message);
+                        return reject(errUsers); 
+                    }
+                    console.log('[localDatabase.js] Tabela "users" verificada/criada.');
+                    
+                    if(errPecas) return reject(new Error("Falha ao criar tabela pecas (ver log acima), mas users pode ter sido criada."));
+                    resolve();
+                });
             });
+        });
     });
 }
 
-async function updatePeca(id, peca) {
-    const db = await connectDatabase();
+// --- Funções para 'pecas' ---
+export function getAllPecas() {
+    console.log("[localDatabase.js] FUNÇÃO getAllPecas INICIADA.");
     return new Promise((resolve, reject) => {
-        const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
-        db.run("UPDATE pecas SET nome = ?, tipo = ?, fabricante = ?, estoque_atual = ?, estoque_minimo = ? WHERE id = ?",
-            [nome, tipo, fabricante, estoque_atual, estoque_minimo, id],
-            function (err) {
-                if (err) {
-                    console.error("Erro ao atualizar peça:", err.message);
-                } else {
-                    resolve(this.changes); // Retorna o número de linhas afetadas
-                }
-            });
-    });
-}
-
-async function deletePeca(id) {
-    const db = await connectDatabase();
-    return new Promise((resolve, reject) => {
-        db.run("DELETE FROM pecas WHERE id = ?", [id], function (err) {
+        if (!db) { console.error("[localDatabase.js] getAllPecas: DB não conectado."); return reject(new Error("DB não conectado em getAllPecas")); }
+        db.all("SELECT * FROM pecas ORDER BY nome ASC", [], (err, rows) => {
             if (err) {
-                console.error("Erro ao deletar peça:", err.message);
+                console.error("[localDatabase.js] ERRO SQLite em getAllPecas:", err.message);
+                reject(err);
             } else {
-                resolve(this.changes); // Retorna o número de linhas afetadas
+                console.log("[localDatabase.js] SUCESSO SQLite getAllPecas retornou:", rows ? rows.length : 0, "linhas.");
+                resolve(rows || []);
             }
         });
     });
 }
 
-async function getRequestedPecas() {
-    const db = await connectDatabase();
+export function insertPeca(peca) {
+    console.log("[localDatabase.js] FUNÇÃO insertPeca INICIADA. Dados recebidos:", peca);
     return new Promise((resolve, reject) => {
-        const sql = `
-            SELECT pecas.nome, COUNT(movimentacoes.peca_id) AS quantidade
-            FROM movimentacoes
-            JOIN pecas ON movimentacoes.peca_id = pecas.id
-            WHERE movimentacoes.tipo = 'saida'
-            GROUP BY pecas.nome
-            ORDER BY quantidade DESC
-            LIMIT 5; -- Exemplo: Top 5 peças mais requisitadas
-        `;
+        if (!db) { console.error("[localDatabase.js] insertPeca: DB não conectado."); return reject(new Error("DB não conectado em insertPeca")); }
+        const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
+        const sql = "INSERT INTO pecas (nome, tipo, fabricante, estoque_atual, estoque_minimo) VALUES (?, ?, ?, ?, ?)";
+        
+        const qNome = nome || '';
+        const qTipo = tipo || '';
+        const qFabricante = fabricante || '';
+        const qEstoqueAtual = Number.isInteger(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
+        const qEstoqueMinimo = Number.isInteger(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
+        console.log("[localDatabase.js] insertPeca - Dados para SQL:", [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo]);
+
+        db.run(sql, [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite ao executar INSERT em 'pecas':", err.message);
+                reject(err);
+            } else {
+                const insertedData = { id: this.lastID, nome: qNome, tipo: qTipo, fabricante: qFabricante, estoque_atual: qEstoqueAtual, estoque_minimo: qEstoqueMinimo };
+                console.log("[localDatabase.js] SUCESSO SQLite INSERT em 'pecas'. Nova linha:", insertedData);
+                resolve(insertedData);
+            }
+        });
+    });
+}
+
+export function updatePeca(id, peca) {
+    console.log("[localDatabase.js] FUNÇÃO updatePeca INICIADA. ID:", id, "Dados:", peca);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] updatePeca: DB não conectado."); return reject(new Error("DB não conectado em updatePeca")); }
+        const { nome, tipo, fabricante, estoque_atual, estoque_minimo } = peca;
+        const sql = "UPDATE pecas SET nome = ?, tipo = ?, fabricante = ?, estoque_atual = ?, estoque_minimo = ? WHERE id = ?";
+        const qNome = nome || '';
+        const qTipo = tipo || '';
+        const qFabricante = fabricante || '';
+        const qEstoqueAtual = Number.isInteger(parseInt(estoque_atual)) ? parseInt(estoque_atual) : 0;
+        const qEstoqueMinimo = Number.isInteger(parseInt(estoque_minimo)) ? parseInt(estoque_minimo) : 0;
+        console.log("[localDatabase.js] updatePeca - Dados para SQL:", [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo, id]);
+
+        db.run(sql, [qNome, qTipo, qFabricante, qEstoqueAtual, qEstoqueMinimo, id], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite ao executar UPDATE em 'pecas':", err.message);
+                reject(err);
+            } else {
+                console.log("[localDatabase.js] SUCESSO SQLite UPDATE em 'pecas'. Alterações:", this.changes);
+                resolve({ changes: this.changes });
+            }
+        });
+    });
+}
+
+export function deletePeca(id) {
+    console.log("[localDatabase.js] FUNÇÃO deletePeca INICIADA. ID:", id);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] deletePeca: DB não conectado."); return reject(new Error("DB não conectado em deletePeca")); }
+        db.run("DELETE FROM pecas WHERE id = ?", [id], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em deletePeca:", err.message);
+                reject(err);
+            } else {
+                console.log("[localDatabase.js] SUCESSO SQLite deletePeca. Alterações:", this.changes);
+                resolve({ changes: this.changes });
+            }
+        });
+    });
+}
+
+export function getRequestedPecas() { // Usado pelo App.jsx para o gráfico
+    console.log("[localDatabase.js] FUNÇÃO getRequestedPecas INICIADA (para gráfico App.jsx)...");
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] getRequestedPecas: DB não conectado."); return reject(new Error("DB não conectado em getRequestedPecas")); }
+        const sql = `SELECT nome, estoque_atual, estoque_minimo FROM pecas ORDER BY nome ASC`;
+        db.all(sql, (err, rows) => {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em getRequestedPecas:", err.message);
+                reject(err);
+            } else {
+                const formattedRows = (rows || []).map(r => ({
+                    nome: r.nome,
+                    quantidade: r.estoque_atual,
+                    estoque_atual: r.estoque_atual,
+                    estoque_minimo: r.estoque_minimo
+                }));
+                console.log("[localDatabase.js] SUCESSO SQLite getRequestedPecas retornou (formatado):", formattedRows.length, "linhas.");
+                resolve(formattedRows);
+            }
+        });
+    });
+}
+
+// --- Funções para USUÁRIOS --- (mantidas, com logs e verificação de db)
+export function findUserByUsername(username) {
+    console.log("[localDatabase.js] FUNÇÃO findUserByUsername. Usuário:", username);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] findUserByUsername: DB não conectado."); return reject(new Error("DB não conectado em findUserByUsername")); }
+        const sql = `SELECT * FROM users WHERE username = ?`;
+        db.get(sql, [username], (err, row) => {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em findUserByUsername:", err.message);
+                reject(err);
+            } else {
+                resolve(row);
+            }
+        });
+    });
+}
+
+export function insertUser(username, passwordHash, role) {
+    console.log("[localDatabase.js] FUNÇÃO insertUser. Dados (sem hash):", {username, role});
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] insertUser: DB não conectado."); return reject(new Error("DB não conectado em insertUser")); }
+        const sql = `INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)`;
+        db.run(sql, [username, passwordHash, role], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em insertUser:", err.message);
+                reject(err);
+            } else {
+                console.log("[localDatabase.js] SUCESSO SQLite insertUser. ID:", this.lastID);
+                resolve({ id: this.lastID, username, role });
+            }
+        });
+    });
+}
+// ... (getAllUsers, updateUserRole, deleteUser devem seguir o mesmo padrão de logs e verificação de !db) ...
+export function getAllUsers() {
+    console.log("[localDatabase.js] FUNÇÃO getAllUsers INICIADA.");
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] getAllUsers: DB não conectado."); return reject(new Error("DB não conectado em getAllUsers")); }
+        const sql = `SELECT id, username, role FROM users`;
         db.all(sql, [], (err, rows) => {
             if (err) {
-                console.error("Erro ao buscar peças mais requisitadas:", err.message);
+                console.error("[localDatabase.js] ERRO SQLite em getAllUsers:", err.message);
                 reject(err);
             } else {
-                resolve(rows);
+                console.log("[localDatabase.js] SUCESSO SQLite getAllUsers retornou:", rows ? rows.length : 0, "linhas.");
+                resolve(rows || []);
             }
         });
     });
 }
 
-export {
-    connectDatabase,
-    createTables,
-    getAllPecas,
-    insertPeca,
-    updatePeca,
-    deletePeca,
-    getRequestedPecas,
-};
+export function updateUserRole(id, newRole) {
+    console.log(`[localDatabase.js] FUNÇÃO updateUserRole. ID: ${id}, Novo Papel: ${newRole}`);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] updateUserRole: DB não conectado."); return reject(new Error("DB não conectado em updateUserRole")); }
+        const sql = `UPDATE users SET role = ? WHERE id = ?`;
+        db.run(sql, [newRole, id], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em updateUserRole:", err.message);
+                reject(err);
+            } else {
+                console.log("[localDatabase.js] SUCESSO SQLite updateUserRole. Alterações:", this.changes);
+                resolve({ changes: this.changes });
+            }
+        });
+    });
+}
 
-createTables();
+export function deleteUser(id) {
+    console.log(`[localDatabase.js] FUNÇÃO deleteUser. ID: ${id}`);
+    return new Promise((resolve, reject) => {
+        if (!db) { console.error("[localDatabase.js] deleteUser: DB não conectado."); return reject(new Error("DB não conectado em deleteUser")); }
+        const sql = `DELETE FROM users WHERE id = ?`;
+        db.run(sql, [id], function(err) {
+            if (err) {
+                console.error("[localDatabase.js] ERRO SQLite em deleteUser:", err.message);
+                reject(err);
+            } else {
+                console.log("[localDatabase.js] SUCESSO SQLite deleteUser. Alterações:", this.changes);
+                resolve({ changes: this.changes });
+            }
+        });
+    });
+}

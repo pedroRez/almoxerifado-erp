@@ -68,7 +68,7 @@ Para rodar o projeto em seu ambiente local:
     * `/pecas` é a tela de gerenciamento de peças (usando o banco de dados local SQLite).
 
 ## Notas Adicionais
-
+ Para gerar build execute prompt como administrador
 * **Banco de Dados Local:** Os dados do almoxarifado (peças) são armazenados localmente no arquivo `almoxerifado.db` criado na raiz do projeto (no processo principal do Electron).
 * **Comunicação Electron:** A comunicação entre o React (interface) e o banco de dados local é feita através do sistema de IPC do Electron, utilizando `preload.js` para expor a API.
 * **Autenticação de Usuários:** O cadastro e login de usuários (`/cadastro` e a lógica no `Login.jsx`) ainda utilizam o Supabase para autenticação online.
