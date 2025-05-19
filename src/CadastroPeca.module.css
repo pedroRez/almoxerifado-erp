@@ -1,18 +1,16 @@
-/* CadastroPeca.module.css (AJUSTADO PARA LARGURA DA TABELA) */
+/* src/CadastroPeca.module.css */
+
+/* --- Container Principal da Página --- */
 .container {
-  min-height: calc(100vh - 5rem); /* Considerando o menu global do AppLayout */
+  min-height: calc(100vh - 5rem); /* Considerando o menu global do AppLayout com altura de aprox. 5rem */
   background-color: #121212; 
   color: #fff;
-  /* Ajuste o padding aqui:
-     padding: 1rem 2rem; (original)
-     padding: 1rem 0.5rem; (padding horizontal menor)
-     ou padding: 1rem 0; (sem padding horizontal neste container, se o App.jsx já tiver)
-     Vamos tentar com um padding horizontal menor.
-  */
-  padding: 1rem 0.5rem; /* Padding horizontal reduzido */
+  padding: 1rem 0.5rem; /* Padding horizontal menor para dar mais espaço aos Cards */
   box-sizing: border-box;
+  width: 100%;
 }
 
+/* --- Navegação/Título Interno da Página de Peças --- */
 .nav {
   display: flex;
   justify-content: flex-start; 
@@ -31,7 +29,7 @@
 }
 
 .navIcon {
-  color: #00bcd4;
+  color: #00bcd4; /* Cor do ícone do título */
 }
 
 .navTitle {
@@ -40,6 +38,7 @@
   color: #e0e0e0; 
 }
 
+/* --- Abas (Listagem / Cadastro) --- */
 .tabsList {
   display: flex; 
   gap: 0.75rem;
@@ -69,55 +68,69 @@
 }
 
 .tabTriggerActive {
-  background-color: #1e1e1e; 
+  background-color: #1e1e1e; /* Fundo da aba ativa combina com o Card */
   color: #00bcd4; 
-  border-color: #00bcd4; 
+  border-color: #00bcd4; /* Borda inferior para destacar aba ativa */
 }
 
 .tabsContent {
-  margin-top: 0;
+  margin-top: 0; /* Conteúdo da aba começa logo abaixo da linha das abas */
 }
 
+/* --- Estilos para Cards (Usados para Tabela, Gráfico e Formulário) --- */
 .card {
   background-color: #1e1e1e;
   border-radius: 8px;
-  padding: 1.5rem; 
+  padding: 1rem; /* Padding interno do Card */
   margin-bottom: 1.5rem; 
   border: 1px solid #333;
-  width: 100%; /* Garante que o card tente usar a largura disponível */
+  width: 100%; 
   box-sizing: border-box;
 }
+
 .cardContent {
-  /* Seus componentes CardContent podem ou não precisar de padding aqui */
+  /* Esta classe pode ser usada se o seu componente <CardContent> de 'components/ui'
+     precisar de estilos específicos ou se ele não tiver padding por padrão.
+     Se ele já tem padding, esta classe pode não ser necessária ou pode ser usada
+     para sobrescrever. */
+  /* Exemplo: padding: 1rem; */
 }
 
+.cardContentTableWrapper { /* Usada no CardContent que envolve a Tabela */
+  padding-left: 0 !important;  /* Remove padding horizontal para a tabela usar mais espaço */
+  padding-right: 0 !important;
+  padding-top: 0; /* Remove padding vertical se a tabela for o único conteúdo */
+  padding-bottom: 0;
+}
+
+/* --- Formulário de Cadastro/Edição de Peças --- */
 .formContainer { 
-  max-width: 700px; 
-  margin: 1rem auto; 
+  max-width: 700px; /* Limita a largura do formulário */
+  margin: 1rem auto; /* Centraliza o formulário e adiciona margem vertical */
 }
 
 .form {
   display: flex; 
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.25rem; /* Espaço entre as linhas do formulário */
 }
 
 .formRow {
   display: flex; 
-  gap: 1.25rem; 
+  gap: 1.25rem; /* Espaço entre campos na mesma linha */
   align-items: flex-start; 
 }
 
-.formGroup {
+.formGroup { /* Agrupa Label e Input */
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  flex: 1; 
+  flex: 1; /* Permite que os formGroups dividam o espaço no formRow */
 }
-.formGroupFlex1 { flex: 1; }
-.formGroupFlex2 { flex: 2; }
+.formGroupFlex1 { flex: 1; } /* Para campos que ocupam 1 parte do espaço */
+.formGroupFlex2 { flex: 2; } /* Para campos que ocupam 2 partes do espaço */
 
-.label {
+.label { /* Estilo para o componente Label de 'components/ui' se você passar esta classe */
   display: block;
   margin-bottom: 0.25rem;
   font-weight: 500;
@@ -126,7 +139,7 @@
   text-align: left;
 }
 
-.input {
+.input { /* Estilo para o componente Input de 'components/ui' se você passar esta classe */
   padding: 0.75rem;
   border-radius: 6px;
   background-color: #2c2c2c;
@@ -136,7 +149,6 @@
   box-sizing: border-box;
   font-size: 1rem;
 }
-
 .input:focus {
   outline: none;
   border-color: #00bcd4;
@@ -149,7 +161,7 @@
   margin-top: 1rem;
 }
 
-.submitButton {
+.submitButton { /* Estilo para o componente Button de 'components/ui' se você passar esta classe */
   background-color: #007bff;
   color: #fff;
   padding: 0.75rem 1.5rem; 
@@ -166,108 +178,109 @@
   background-color: #0056b3;
 }
 
-.table {
-  width: 100%; /* Tabela ocupa 100% do seu contêiner (o Card) */
-  border-collapse: separate;
-  border-spacing: 0;
-  /* margin-top: 1rem; */ /* Removido, pois o Card já tem padding/margem */
-  /* border-radius: 8px; */ /* O Card já tem borda arredondada */
-  /* overflow: hidden; */
+
+/* --- Estilos para a Tabela de Peças --- */
+
+/* Estilo para o div wrapper do componente Table em components/ui/table.jsx
+   se você passar esta classe para a prop `className` do componente <Table> */
+.tableContainerDefaultFromUi { 
+  width: 100%;
+  overflow-x: auto; 
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #1e1e1e; /* Fundo para o container da tabela, caso o Card não cubra */
+  margin-bottom: 1.5rem; 
 }
 
-.th {
-  background-color: #2c2c2c !important; 
+/* Estilo para a tag <table> dentro do componente Table em components/ui/table.jsx
+   se você passar esta classe para a prop `tableClassName` do componente <Table> */
+.table {
+  width: 100% !important; /* Força a tabela a ocupar 100% do seu contêiner */
+  table-layout: fixed; /* Ajuda as larguras das colunas a serem respeitadas */
+  border-collapse: collapse; /* Estilo de borda mais comum para tabelas */
+  color: #ccc; 
+  font-size: 0.9rem; 
+}
+
+/* Estilo para o <thead> se você passar esta classe para TableHeader */
+.thead { 
+  background-color: #2a2a2a; /* Fundo escuro para o cabeçalho */
+}
+
+/* Estilo para <tr> se você passar esta classe para TableRow */
+.tableRow { 
+  border-bottom: 1px solid #333; 
+  transition: background-color 0.15s ease-in-out;
+}
+.tableRow:last-child {
+  border-bottom: none; /* Remove a borda da última linha */
+}
+.tableRow:hover { 
+  background-color: rgba(255, 255, 255, 0.05); /* Efeito de hover sutil */
+}
+
+/* Estilo para <th> se você passar esta classe para TableHead */
+.th { 
   color: #00bcd4 !important; 
+  padding: 0.75rem 1rem;  /* Padding para as células do cabeçalho */
   font-weight: 600;
-  font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #444;
+  border-right: 1px solid #333; /* Linha vertical entre cabeçalhos */
   vertical-align: middle;
   text-align: left; 
-  /* Padding já vem do componente TableHead (px-4 py-3) */
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  white-space: nowrap; 
 }
-
-.thNumeric {
-  text-align: right !important; 
+.th:last-child {
+  border-right: none; /* Remove a linha vertical do último cabeçalho */
 }
+.thNumeric { text-align: right !important; } /* Alinhamento para cabeçalhos numéricos */
 
-.td {
-  border-bottom: 1px solid #2c2c2c;
-  font-size: 0.95rem;
-  color: #ccc;
+/* Estilo para <td> se você passar esta classe para TableCell */
+.td { 
+  padding: 0.75rem 1rem; /* Padding para as células de dados */
+  border-right: 1px solid #333; /* Linha vertical entre células */
   vertical-align: middle; 
   text-align: left; 
-  /* Padding já vem do componente TableCell (px-4 py-3) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* white-space: nowrap; */ /* Descomente se quiser que o texto não quebre linha na célula */
 }
-
-.tdNumeric {
-  text-align: right !important; 
+.td:last-child {
+  border-right: none; /* Remove a linha vertical da última célula */
 }
+.tdNumeric { text-align: right !important; } /* Alinhamento para células numéricas */
 
-.actionsHeader { 
+.actionsHeader { /* Para o <th> da coluna "Ações" */
   text-align: right !important;
-  min-width: 200px; /* Ajuste conforme necessário para os botões caberem */
-  /* width: 200px; */ /* Evitar width fixo se possível, usar min-width */
+  width: 200px; /* Largura fixa para a coluna de ações. Ajuste se os botões não couberem. */
 }
 
-.actions { 
+.actions { /* Para o <td> que contém os botões de ação */
   display: flex !important; 
   gap: 0.5rem !important; 
   justify-content: flex-end !important; 
   align-items: center !important;
 }
 
-.actionButton {
+.actionButton { /* Estilo para os componentes Button de Ação */
   display: inline-flex !important; 
   align-items: center;
   gap: 0.4rem !important; 
-  flex-shrink: 0; /* Impede que encolham demais */
-  /* Estilos de padding/font-size já vêm do componente Button variant="sm" */
+  flex-shrink: 0; /* Para não serem esmagados se o espaço for pouco */
+  /* O estilo visual (variant, size) vem do seu componente Button de components/ui/ */
+}
+.buttonIcon { 
+  /* Se precisar de algum ajuste específico para o ícone dentro do botão */
 }
 
-.statusMessage {
-  text-align: center;
-  padding: 0.75rem;
-  margin: 1rem 0;
-  border-radius: 6px;
-  font-weight: 500;
-}
-.errorMessage {
-  color: #fff;
-  background-color: #d32f2f;
-  border: 1px solid #b71c1c;
-}
-.successMessage {
-  color: #121212;
-  background-color: #a5d6a7;
-  border: 1px solid #388e3c;
-}
-
-.emptyTableCell {
-  text-align: center !important; /* Garante centralização */
-  color: #777;
-  font-style: italic;
-  padding: 2rem 0 !important; /* Padding vertical apenas */
-}
-
-.formTitle {
-  color: #00bcd4;
-  border-bottom: 1px solid #444;
-  padding-bottom: 0.75rem;
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  text-align: left;
-}
-
-.graficoCard {
-  margin-top: 2rem;
-}
-.chartTitle {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #00bcd4;
-  text-align: left;
-}
+/* --- Mensagens de Status e Outros --- */
+.statusMessage { text-align: center; padding: 0.75rem; margin: 1rem 0; border-radius: 6px; font-weight: 500; }
+.errorMessage { color: #fff; background-color: #d32f2f; border: 1px solid #b71c1c; }
+.successMessage { color: #121212; background-color: #a5d6a7; border: 1px solid #388e3c; }
+.emptyTableCell { text-align: center !important; color: #777; font-style: italic; padding-top: 2rem !important; padding-bottom: 2rem !important; }
+.formTitle { color: #00bcd4; border-bottom: 1px solid #444; padding-bottom: 0.75rem; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600; text-align: left; }
+.graficoCard { margin-top: 2rem; }
+.chartTitle { font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem; color: #00bcd4; text-align: left; }
