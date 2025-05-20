@@ -179,20 +179,7 @@ export default function CadastroPeca() {
 
             {activeTab === "listagem" && (
                 <div className={styles.tabsContent}>
-                    <div className={styles.searchContainer}>
-                        <Label htmlFor="buscaPeca" className={styles.searchLabel}>Buscar por Nome:</Label>
-                        <div className={styles.searchInputWrapper}>
-                            <Search size={18} className={styles.searchIcon} />
-                            <Input
-                                type="text"
-                                id="buscaPeca"
-                                placeholder="Digite o nome da peça..."
-                                value={termoBusca}
-                                onChange={(e) => setTermoBusca(e.target.value)}
-                                className={styles.searchInput}
-                            />
-                        </div>
-                    </div>
+                    
 
                     {/* GRÁFICO ANTES DA TABELA */}
                     {pecasFiltradas.length > 0 && (
@@ -215,6 +202,20 @@ export default function CadastroPeca() {
                             </CardContent>
                         </Card>
                     )}
+                    <div className={styles.searchContainer}>
+                        <Label htmlFor="buscaPeca" className={styles.searchLabel}>Buscar por Nome:</Label>
+                        <div className={styles.searchInputWrapper}>
+                            <Search size={18} className={styles.searchIcon} />
+                            <Input
+                                type="text"
+                                id="buscaPeca"
+                                placeholder="Digite o nome da peça..."
+                                value={termoBusca}
+                                onChange={(e) => setTermoBusca(e.target.value)}
+                                className={styles.searchInput}
+                            />
+                        </div>
+                    </div>
 
                     <Card className={styles.card}>
                         <CardContent className={classNames(styles.cardContent, styles.cardContentTableWrapper)}>

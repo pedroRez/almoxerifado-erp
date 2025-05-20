@@ -1,27 +1,27 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
-console.log("[preload.js] Script de pré-carregamento sendo executado. Expondo API (vComUserManagementCompleto)...");
+console.log("[preload.js] Script de pré-carregamento sendo executado. Expondo API (vFinalCompleto_SemPlaceholders)...");
 
 contextBridge.exposeInMainWorld('api', {
-    // Peças
+    // Funções relacionadas a 'Peças'
     getAllPecas: () => ipcRenderer.invoke('pecas:fetch-all'),
     insertPeca: (peca) => ipcRenderer.invoke('pecas:insert', peca),
     updatePeca: (id, peca) => ipcRenderer.invoke('pecas:update', id, peca),
     deletePeca: (id) => ipcRenderer.invoke('pecas:delete', id),
-    getRequestedPecas: () => ipcRenderer.invoke('pecas:fetch-requested'),
+    getRequestedPecas: () => ipcRenderer.invoke('pecas:fetch-requested'), // Usado pelo gráfico no App.jsx
 
-    // Autenticação
-    login: (credentials) => ipcRenderer.invoke('auth:login', credentials),
+    // Funções relacionadas à AUTENTICAÇÃO
+    login: (credentials) => ipcRenderer.invoke('auth:login', credentials), // credentials = { username, password }
     logout: () => ipcRenderer.invoke('auth:logout'),
     getSession: () => ipcRenderer.invoke('auth:get-session'),
-    changePassword: (passwords) => ipcRenderer.invoke('auth:change-password', passwords),
+    changePassword: (passwords) => ipcRenderer.invoke('auth:change-password', passwords), // passwords = { currentPassword, newPassword }
 
-    // Gerenciamento de Usuários
-    createUser: (userData) => ipcRenderer.invoke('users:create', userData),
+    // Funções relacionadas ao GERENCIAMENTO DE USUÁRIOS
+    createUser: (userData) => ipcRenderer.invoke('users:create', userData), // userData = { username, password, role, can_approve_purchase_orders (opcional para admin) }
     getAllUsers: () => ipcRenderer.invoke('users:fetch-all'),
-    updateUserDetails: (details) => ipcRenderer.invoke('users:update-details', details),
-    adminResetPassword: (resetData) => ipcRenderer.invoke('users:admin-reset-password', resetData),
+    updateUserDetails: (details) => ipcRenderer.invoke('users:update-details', details), // details = { userId, username?, role?, can_approve_purchase_orders? }
+    adminResetPassword: (resetData) => ipcRenderer.invoke('users:admin-reset-password', resetData), // resetData = { userId, newPassword }
     deleteUser: (userId) => ipcRenderer.invoke('users:delete', userId)
 });
 

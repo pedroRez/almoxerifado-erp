@@ -1,77 +1,169 @@
-# Projeto ERP para Terceirização de Máquinas (Piloto - Almoxarifado)
+# Almoxarifado ERP Desktop
 
-Este README fornece os passos para configurar e rodar este projeto piloto de ERP para uma empresa de terceirização de máquinas (escavadeiras e caminhões) com foco no módulo de almoxarifado.
+## Visão Geral
 
-## Pré-requisitos
+O Almoxarifado ERP Desktop é uma aplicação de desktop desenvolvida para modernizar e otimizar o gerenciamento de almoxarifados, substituindo processos baseados em planilhas por um sistema integrado e eficiente. A aplicação permite o controle de peças, gerenciamento de estoque, cadastro e autenticação de usuários com diferentes níveis de acesso (Administrador, Gerente, Funcionário), e funcionalidades financeiras (como aprovação de pedidos de compra, a ser implementada).
 
-Certifique-se de ter o seguinte instalado no seu ambiente de desenvolvimento:
+Este sistema é construído utilizando Electron para a estrutura da aplicação desktop, React para a interface do usuário (frontend), e PostgreSQL como banco de dados para persistência de dados.
 
-* **Node.js:** (Versão LTS recomendada) - Necessário para executar o Vite, o npm e o Electron. Você pode baixá-lo em [https://nodejs.org/](https://nodejs.org/).
-* **npm (Node Package Manager):** Instalado automaticamente com o Node.js.
-* **Electron:** Instalado como uma dependência do projeto.
+## Funcionalidades Principais (Implementadas e Planejadas)
 
-## Configuração do Projeto
+* **Autenticação de Usuários:**
+    * Sistema de login seguro.
+    * Níveis de acesso: Administrador, Gerente, Funcionário.
+    * Usuário pode alterar a própria senha.
+* **Gerenciamento de Usuários (por Administradores/Gerentes):**
+    * Criação de novos usuários com atribuição de papéis.
+    * Listagem de usuários.
+    * (Planejado) Edição e exclusão de usuários.
+    * (Planejado) Atribuição de permissões específicas (ex: aprovação financeira).
+* **Gerenciamento de Peças (Estoque):**
+    * Cadastro, edição, exclusão e listagem de peças.
+    * Controle de estoque atual e mínimo.
+    * (Planejado) Busca e filtros avançados na listagem de peças.
+    * Visualização gráfica de dados do estoque.
+* **Módulo Financeiro (Planejado):**
+    * Gerenciamento e aprovação de pedidos de compra.
+* **Sincronização Online (Planejado):**
+    * Capacidade futura de sincronizar dados com um banco de dados PostgreSQL online (ex: Supabase) para acesso remoto ou backup.
 
-Siga estes passos para configurar o projeto em um novo ambiente:
+## Tecnologias Utilizadas
+
+* **Electron:** Para construir a aplicação desktop multiplataforma.
+* **React:** Para a construção da interface do usuário.
+* **Vite:** Como ferramenta de build e servidor de desenvolvimento para o frontend React.
+* **Node.js:** Ambiente de execução para o processo principal do Electron e scripts.
+* **PostgreSQL:** Sistema de gerenciamento de banco de dados relacional.
+* **`pg` (Node.js Driver):** Para comunicação entre a aplicação Node.js (processo principal do Electron) e o banco de dados PostgreSQL.
+* **React Router (HashRouter):** Para navegação no frontend.
+* **Lucide-React:** Para ícones.
+* **Recharts:** Para gráficos.
+* **CSS Modules / CSS Global:** Para estilização.
+
+## Configuração do Ambiente de Desenvolvimento
+
+Siga os passos abaixo para configurar e executar o projeto em um novo ambiente.
+
+### Pré-requisitos
+
+1.  **Node.js e npm:** Certifique-se de ter o Node.js (versão 18.x ou superior recomendada) e o npm instalados. Você pode baixá-los em [nodejs.org](https://nodejs.org/).
+2.  **PostgreSQL:**
+    * Instale o PostgreSQL (versão 14 ou superior recomendada) em sua máquina ou tenha acesso a um servidor PostgreSQL. Download em [postgresql.org/download/](https://www.postgresql.org/download/).
+    * Durante a instalação, você definirá uma senha para o superusuário `postgres`. Anote-a.
+    * Recomenda-se ter uma ferramenta de administração gráfica como o **pgAdmin 4** (geralmente incluído no instalador do PostgreSQL) para facilitar a criação do banco e do usuário.
+3.  **Git (Opcional, mas recomendado):** Para clonar o repositório.
+
+### Passos de Configuração
 
 1.  **Clonar o Repositório (se aplicável):**
     ```bash
-    git clone <URL_DO_SEU_REPOSITÓRIO>
-    cd almoxerifado-erp
+    git clone <url_do_repositorio>
+    cd almoxarifado-erp 
     ```
+    Se você não estiver usando Git, simplesmente copie a pasta do projeto para o seu ambiente.
 
-2.  **Instalar as Dependências:**
-    Execute o seguinte comando na raiz do projeto para instalar todas as dependências listadas no `package.json`, incluindo React, Vite, Electron, e outras bibliotecas:
+2.  **Instalar Dependências do Projeto:**
+    Navegue até a pasta raiz do projeto no seu terminal e execute:
     ```bash
     npm install
     ```
+    Isso instalará todas as dependências listadas no `package.json`.
 
-3.  **Configurar o Banco de Dados Local (SQLite):**
-    O projeto utiliza um banco de dados local SQLite para o almoxarifado.
-    * O arquivo `localDatabase.js` contém a lógica para conectar e criar as tabelas no arquivo `almoxerifado.db`.
-    * Certifique-se de que este arquivo esteja na raiz do seu projeto.
+3.  **Configurar o Banco de Dados PostgreSQL:**
+    * **Criar o Banco de Dados:**
+        * Usando o pgAdmin ou `psql`, crie um novo banco de dados. Sugestão de nome: `Xerife`.
+        * Exemplo com `psql` (conectado como superusuário `postgres`):
+            ```sql
+            CREATE DATABASE "Xerife";
+            ```
+    * **Criar um Usuário Dedicado para a Aplicação:**
+        * É uma boa prática não usar o superusuário `postgres` para a aplicação. Crie um novo usuário (role) com uma senha forte. Sugestão de nome: `xerife_user`.
+        * Exemplo com `psql`:
+            ```sql
+            CREATE USER xerife_user WITH PASSWORD 'sua_senha_forte_aqui';
+            ```
+    * **Conceder Permissões ao Usuário no Banco de Dados:**
+        * Conecte-se ao banco de dados `Xerife` (como `postgres`) e execute os seguintes comandos SQL para dar as permissões necessárias ao `xerife_user`:
+            ```sql
+            GRANT CONNECT ON DATABASE "Xerife" TO xerife_user;
+            -- Conecte-se ao banco "Xerife" antes de rodar os próximos
+            \c "Xerife" 
+            GRANT USAGE, CREATE ON SCHEMA public TO xerife_user;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO xerife_user;
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO xerife_user;
+            -- Se você criar tabelas como 'postgres', precisará conceder explicitamente ou ajustar os default privileges:
+            -- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO xerife_user; 
+            -- GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO xerife_user;
+            ```
+    * **Configurar `pg_hba.conf` (se necessário):**
+        * Certifique-se de que o arquivo `pg_hba.conf` do seu PostgreSQL permite conexões locais para o `xerife_user` usando um método que exige senha (como `scram-sha-256` ou `md5`). A configuração padrão geralmente já é segura.
+        * Exemplo de linha para conexões locais IPv4:
+            `host    all             xerife_user     127.0.0.1/32            scram-sha-256`
+        * Lembre-se de reiniciar o serviço do PostgreSQL se você alterar este arquivo.
 
-4.  **Configurar o Arquivo Principal do Electron (`main.js`):**
-    * Crie um arquivo `main.js` na raiz do projeto com a lógica para iniciar o Electron e carregar a aplicação React. O conteúdo deste arquivo deve ser semelhante ao que foi compartilhado durante a conversa.
-    * Certifique-se de que a função `createWindow` carrega a URL do Vite (`http://localhost:5173/`) durante o desenvolvimento.
+4.  **Configurar a Conexão do Banco de Dados na Aplicação:**
+    * Abra o arquivo `postgresService.js` na raiz do projeto.
+    * Localize o objeto `dbConfig` e atualize os valores com os dados do seu servidor PostgreSQL local:
+        ```javascript
+        const dbConfig = {
+          user: 'xerife_user',        // O usuário que você criou
+          host: 'localhost',          // Ou o IP do servidor na rede da empresa
+          database: 'Xerife',         // O nome do banco de dados
+          password: 'sua_senha_forte_aqui', // A senha que você definiu para xerife_user
+          port: 5432,                 // Porta padrão do PostgreSQL
+        };
+        ```
+    * Salve o arquivo.
 
-5.  **Configurar o Arquivo de Pré-Carregamento (`preload.js`):**
-    * Crie um arquivo `preload.js` na raiz do projeto para expor a `electronAPI` para comunicação segura entre o React e o processo principal. O conteúdo deste arquivo deve ser semelhante ao que foi compartilhado durante a conversa.
-
-6.  **Modificar o Script `dev` no `package.json`:**
-    Edite a seção `"scripts"` no `package.json` para iniciar o Vite e o Electron simultaneamente:
-    ```json
-    "scripts": {
-      "dev": "concurrently \"vite\" \"electron .\"",
-      "build": "vite build",
-      "lint": "eslint .",
-      "preview": "vite preview"
-    }
-    ```
-    Certifique-se de ter `concurrently` instalado (`npm install concurrently --save-dev`).
-
-## Executando o Projeto
-
-Para rodar o projeto em seu ambiente local:
-
-1.  **Abra um terminal na raiz do projeto (`almoxerifado-erp`).**
-2.  **Execute o seguinte comando para iniciar o servidor de desenvolvimento do Vite e a aplicação Electron:**
+5.  **Executar a Aplicação em Modo de Desenvolvimento:**
+    Na pasta raiz do projeto, execute:
     ```bash
     npm run dev
     ```
+    Isso iniciará o servidor de desenvolvimento do Vite para o frontend e o processo principal do Electron.
+    * Na primeira execução com um banco de dados `Xerife` vazio, o `main.js` (Electron) tentará criar as tabelas (`users`, `pecas`) e o usuário `admin` padrão (senha: `admin`). Verifique os logs no terminal para confirmar.
 
-    Isso iniciará o Vite servindo sua aplicação React em `http://localhost:5173/` e abrirá uma janela do Electron carregando essa URL.
+### Estrutura de Arquivos Principal
 
-3.  **Navegue pela aplicação:**
-    * A tela principal (`/`) é o dashboard.
-    * `/cadastro` é a tela de cadastro de usuários (ainda usando Supabase).
-    * `/pecas` é a tela de gerenciamento de peças (usando o banco de dados local SQLite).
+* `main.js`: Ponto de entrada do processo principal do Electron (backend).
+* `preload.js`: Script de pré-carregamento do Electron, expõe APIs do backend para o frontend.
+* `postgresService.js`: Módulo responsável pela comunicação com o banco de dados PostgreSQL.
+* `src/`: Contém todo o código do frontend React.
+    * `src/main.jsx`: Ponto de entrada da aplicação React.
+    * `src/App.jsx`: Componente principal do Dashboard.
+    * `src/Login.jsx`: Componente da tela de login.
+    * `src/Cadastro.jsx`: Componente para gerenciamento de usuários.
+    * `src/CadastroPeca.jsx`: Componente para gerenciamento de peças.
+    * `src/AlterarSenha.jsx`: Componente para usuários alterarem suas senhas.
+    * `src/AuthContext.jsx`: Contexto React para gerenciamento de autenticação.
+    * `src/components/ui/`: Pasta para componentes de UI reutilizáveis (ex: Table, Button, Card).
+    * `*.module.css`: Arquivos CSS Modules para estilização específica de componentes.
+    * `App.css` ou `index.css`: Arquivo CSS global.
+* `public/`: Contém assets estáticos.
 
-## Notas Adicionais
- Para gerar build execute prompt como administrador
-* **Banco de Dados Local:** Os dados do almoxarifado (peças) são armazenados localmente no arquivo `almoxerifado.db` criado na raiz do projeto (no processo principal do Electron).
-* **Comunicação Electron:** A comunicação entre o React (interface) e o banco de dados local é feita através do sistema de IPC do Electron, utilizando `preload.js` para expor a API.
-* **Autenticação de Usuários:** O cadastro e login de usuários (`/cadastro` e a lógica no `Login.jsx`) ainda utilizam o Supabase para autenticação online.
-* **Gráfico no Dashboard:** O gráfico de peças mais requisitadas no dashboard (`App.jsx`) busca dados simulados ou (se implementado no `localDatabase.js` e `main.js`) dados reais do banco de dados local.
+## Scripts Disponíveis
 
-Este guia deve fornecer os passos necessários para configurar e rodar o projeto piloto no seu ambiente. Se encontrar algum problema, revise os passos e as configurações dos arquivos mencionados.
+No `package.json`, os seguintes scripts são relevantes:
+
+* `npm run dev`: Inicia a aplicação em modo de desenvolvimento com Vite e Electron.
+* `npm run build`: Compila o frontend React para produção (gera a pasta `dist/`).
+* `npm run electron-build`: Empacota a aplicação Electron para distribuição (gera um instalador na pasta `dist_electron/`).
+* `npm run lint`: Executa o ESLint para verificar o código.
+* `npm run preview`: Inicia um servidor local para pré-visualizar o build de produção do frontend.
+
+## Próximos Passos de Desenvolvimento (Roadmap)
+
+* Implementação completa das funcionalidades de Edição e Exclusão de Usuários pelo Administrador.
+* Refinamento das permissões de Gerente (ex: quais usuários ele pode editar).
+* Busca por nome/código na tela de listagem de peças.
+* Implementação do Módulo Financeiro:
+    * Modelagem das tabelas de Pedidos de Compra, Itens de Pedido, etc.
+    * Interface para criação e listagem de Pedidos de Compra.
+    * Fluxo de aprovação de Pedidos de Compra (envolvendo usuários com permissão `can_approve_purchase_orders`).
+* Reestruturação do banco de dados com base em planilhas detalhadas do almoxarifado (importação de dados existentes, novas tabelas e relacionamentos).
+* Criação de telas de listagem, cadastro, edição e exclusão para todas as novas entidades do banco de dados.
+* Implementação de um sistema de log de auditoria mais robusto.
+* Considerar a sincronização online com um banco de dados PostgreSQL na nuvem (ex: Supabase) como uma fase futura.
+
+---
+Este README deve dar um bom ponto de partida! Você pode adicionar seções sobre como contribuir, licença, etc., conforme o projeto evolui.
