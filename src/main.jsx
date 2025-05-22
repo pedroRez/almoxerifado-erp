@@ -9,7 +9,7 @@ import { AuthProvider, useAuth } from './AuthContext.jsx';
 
 import App from "./App.jsx"; 
 import Cadastro from "./Cadastro.jsx"; 
-import CadastroPeca from "./CadastroPeca.jsx";
+import Estoque from "./Estoque.jsx";
 import Login from "./Login.jsx";
 import AlterarSenha from "./AlterarSenha.jsx"; 
 
@@ -113,7 +113,7 @@ function ApplicationLayout() {
                     <Route path="/login" element={<Login />} />
                     
                     <Route path="/" element={<RequireAuth><App /></RequireAuth>} />
-                    <Route path="/pecas" element={<RequireAuth><CadastroPeca /></RequireAuth>} />
+                    <Route path="/pecas" element={<RequireAuth><Estoque /></RequireAuth>} />
                     <Route
                         path="/admin/gerenciar-usuarios"
                         element={

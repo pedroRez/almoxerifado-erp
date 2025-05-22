@@ -133,7 +133,7 @@ Siga os passos abaixo para configurar e executar o projeto em um novo ambiente.
     * `src/App.jsx`: Componente principal do Dashboard.
     * `src/Login.jsx`: Componente da tela de login.
     * `src/Cadastro.jsx`: Componente para gerenciamento de usuários.
-    * `src/CadastroPeca.jsx`: Componente para gerenciamento de peças.
+    * `src/Estoque.jsx`: Componente para gerenciamento de peças.
     * `src/AlterarSenha.jsx`: Componente para usuários alterarem suas senhas.
     * `src/AuthContext.jsx`: Contexto React para gerenciamento de autenticação.
     * `src/components/ui/`: Pasta para componentes de UI reutilizáveis (ex: Table, Button, Card).
