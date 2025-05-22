@@ -1,38 +1,29 @@
 // src/Estoque.jsx
 import React, { useEffect, useState, useMemo } from "react";
-import { Archive, Edit, Trash2, Search, PackagePlus, CalendarDays } from "lucide-react";
+import { Archive, Edit, Trash2, Search, PackagePlus, BarChart3, List } from "lucide-react"; // Adicionado BarChart3, List
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 // Certifique-se que os caminhos para seus componentes UI estão corretos
-import { Card, CardContent } from "./components/ui/card.jsx";
-import { Button } from "./components/ui/button.jsx";
-import { Input } from "./components/ui/input.jsx";
-import { Label } from "./components/ui/label.jsx";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./components/ui/table.jsx";
-import styles from "./Estoque.module.css";
-import { useAuth } from './AuthContext.jsx';
+import { Card, CardContent } from "../components/ui/card.jsx";
+import { Button } from "../components/ui/button.jsx";
+import { Input } from "../components/ui/input.jsx";
+import { Label } from "../components/ui/label.jsx";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table.jsx";
+import styles from "../styles/Estoque.module.css";
+import { useAuth } from '../contexts/AuthContext.jsx';
 
-console.log("Estoque.jsx: Script carregado (vFinal_CodigoFixoAutoBackend_Completo)");
+console.log("Estoque.jsx: Script carregado (vComAbasSeparadas_BuscaNoCard)");
 
 function classNames(...classes) { return classes.filter(Boolean).join(' '); }
 
 export default function Estoque() {
     const { usuario: currentUser } = useAuth();
-
     const [itensEstoque, setItensEstoque] = useState([]);
     const [form, setForm] = useState({
-        // codigo_fixo removido daqui para o estado inicial do form de criação
-        codigo_peca: "", 
-        nome: "",       
-        classificacao: "",
-        fabricante: "",
-        aplicacao: "",   
-        estoque_atual: 0, // Para Saldo Inicial na criação
-        estoque_minimo: 0,
-        valor_medio_unitario: 0, // Para Custo do Saldo Inicial na criação
-        data_lancamento: "" 
+        codigo_peca: "", nome: "", classificacao: "", fabricante: "", aplicacao: "",   
+        estoque_atual: 0, estoque_minimo: 0, valor_medio_unitario: 0, data_lancamento: "" 
     });
-    const [editingItem, setEditingItem] = useState(null); // Guarda o item completo para edição
-    const [activeTab, setActiveTab] = useState("listagem");
+    const [editingItem, setEditingItem] = useState(null);
+    const [activeTab, setActiveTab] = useState("listagem"); // listagem, grafico, cadastro
     const [mensagemStatus, setMensagemStatus] = useState({ texto: "", tipo: "" });
     const [termoBusca, setTermoBusca] = useState("");
 
@@ -88,39 +79,25 @@ export default function Estoque() {
             setMensagemStatus({ texto: "Nome da Peça (Descrição) é obrigatório.", tipo: "erro" });
             return;
         }
-        
-        if (!editingItem) { // Apenas na criação
+        if (!editingItem) {
             if (form.estoque_atual === undefined || form.estoque_atual < 0) {
-                setMensagemStatus({ texto: "Saldo inicial é obrigatório e não pode ser negativo.", tipo: "erro" }); return;
+                setMensagemStatus({ texto: "Saldo inicial obrigatório e não negativo.", tipo: "erro" }); return;
             }
             if (form.valor_medio_unitario === undefined || form.valor_medio_unitario < 0) {
-                setMensagemStatus({ texto: "Custo unitário para o saldo inicial é obrigatório e não pode ser negativo.", tipo: "erro" }); return;
+                setMensagemStatus({ texto: "Custo unitário do saldo inicial obrigatório.", tipo: "erro" }); return;
             }
         }
 
-        // Para novos itens, codigo_fixo NÃO é enviado no payload, será gerado pelo backend.
-        // Para edição, o codigo_fixo do item original é usado para identificação, mas não para alteração.
         const payload = {
-            codigo_peca: form.codigo_peca,
-            nome: form.nome, 
-            tipo: form.classificacao, 
-            fabricante: form.fabricante,
-            aplicacao: form.aplicacao,
-            estoque_atual: form.estoque_atual, 
-            estoque_minimo: form.estoque_minimo,
+            codigo_fixo: editingItem ? editingItem.codigo_fixo : undefined,
+            codigo_peca: form.codigo_peca, nome: form.nome, tipo: form.classificacao, 
+            fabricante: form.fabricante, aplicacao: form.aplicacao,
+            estoque_atual: form.estoque_atual, estoque_minimo: form.estoque_minimo,
             valor_medio_unitario: form.valor_medio_unitario, 
             data_lancamento: form.data_lancamento || null,
             usuario_id: currentUser?.id 
         };
-
-        // Se estiver editando, adicionamos o codigo_fixo original ao payload para referência do backend,
-        // mas a função updatePeca no backend não deve permitir sua alteração.
-        // O identificador para update é o id_sync.
-        if (editingItem) {
-            payload.codigo_fixo = editingItem.codigo_fixo; 
-        }
-
-        console.log("Estoque.jsx: Enviando formulário:", payload, "Item em Edição (se houver):", editingItem);
+        console.log("Estoque.jsx: Enviando formulário:", payload, "Item em Edição:", editingItem);
 
         try {
             if (editingItem && editingItem.id_sync) { 
@@ -147,16 +124,13 @@ export default function Estoque() {
         setMensagemStatus({ texto: "", tipo: "" }); 
         setEditingItem(item); 
         setForm({
-            // codigo_fixo não é parte do form editável, vem do editingItem
-            codigo_peca: item.codigo_peca || "",
-            nome: item.descricao || "", 
-            classificacao: item.classificacao || "", 
-            fabricante: item.fabricante || "",
+            codigo_peca: item.codigo_peca || "", nome: item.descricao || "", 
+            classificacao: item.classificacao || "", fabricante: item.fabricante || "",
             aplicacao: item.aplicacao || "",
             estoque_minimo: item.estoque_minimo || 0,
             data_lancamento: item.data_lancamento ? String(item.data_lancamento).split('T')[0] : "", 
-            estoque_atual: item.estoque_atual || 0, // Apenas para exibição no form de edição
-            valor_medio_unitario: 0 // Não é editado aqui
+            estoque_atual: item.estoque_atual || 0, 
+            valor_medio_unitario: 0 
         });
         setActiveTab("cadastro");
     };
@@ -179,8 +153,12 @@ export default function Estoque() {
         resetForm(); 
         setActiveTab(tabName);
         setTermoBusca("");
-        if (tabName === "listagem" && mensagemStatus.tipo === "sucesso") { 
-            // Não limpa msg de sucesso se estiver voltando para listagem
+        if (tabName === "listagem" || tabName === "grafico") { // Limpa mensagem ao ir para listagem ou gráfico
+            if (mensagemStatus.tipo === "sucesso"){
+                // Não limpa a mensagem de sucesso imediatamente para dar tempo de ler
+            } else {
+                 setMensagemStatus({ texto: "", tipo: "" });
+            }
         } else {
             setMensagemStatus({ texto: "", tipo: "" });
         }
@@ -223,7 +201,13 @@ export default function Estoque() {
                     className={`${styles.tabTrigger} ${activeTab === "listagem" ? styles.tabTriggerActive : ""}`}
                     onClick={() => fullResetFormAndTab("listagem")}
                 >
-                    📦 Listagem & Gráfico
+                    <List size={18} style={{marginRight: '0.3rem'}} /> Listagem
+                </button>
+                <button
+                    className={`${styles.tabTrigger} ${activeTab === "grafico" ? styles.tabTriggerActive : ""}`}
+                    onClick={() => fullResetFormAndTab("grafico")}
+                >
+                    <BarChart3 size={18} style={{marginRight: '0.3rem'}} /> Gráfico
                 </button>
                 <button
                     className={`${styles.tabTrigger} ${activeTab === "cadastro" ? styles.tabTriggerActive : ""}`}
@@ -236,39 +220,19 @@ export default function Estoque() {
 
             {activeTab === "listagem" && (
                 <div className={styles.tabsContent}>
-                    <div className={styles.searchContainer}>
-                        <Label htmlFor="buscaPeca" className={styles.searchLabel}>Buscar por Código ou Descrição:</Label>
-                        <div className={styles.searchInputWrapper}>
-                            <Search size={18} className={styles.searchIcon} />
-                            <Input type="text" id="buscaPeca" placeholder="Digite código ou descrição..."
-                                value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
-                                className={styles.searchInput}/>
-                        </div>
-                    </div>
-
-                    {itensFiltrados.length > 0 && (
-                         <Card className={classNames(styles.card, styles.graficoCard)}>
-                            <CardContent className={styles.cardContent}>
-                                <h2 className={styles.chartTitle}>📊 Estoque Atual vs. Estoque Mínimo</h2>
-                                <ResponsiveContainer width="100%" height={300}>
-                                    <BarChart data={itensFiltrados} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke={"#444"}/>
-                                        <XAxis dataKey="descricao" name="Descrição" stroke={"#888"} tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={80} />
-                                        <YAxis stroke={"#888"} tick={{ fontSize: 12 }} />
-                                        <Tooltip 
-                                            contentStyle={{ backgroundColor: '#333', color: '#fff', borderRadius: 5, border: `1px solid #444` }}
-                                            cursor={{ fill: 'rgba(100,100,100,0.1)' }}
-                                        />
-                                        <Bar dataKey="estoque_atual" fill={"#22d3ee"} name="Estoque Atual" radius={[4,4,0,0]} />
-                                        <Bar dataKey="estoque_minimo" fill={"#f43f5e"} name="Estoque Mínimo" radius={[4,4,0,0]} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    <Card className={styles.card}>
+                    <Card className={styles.card}> {/* Card único para busca e tabela */}
                         <CardContent className={classNames(styles.cardContent, styles.cardContentTableWrapper)}>
+                            {/* CAMPO DE BUSCA MOVIDO PARA DENTRO DO CARD */}
+                            <div className={styles.searchContainer}>
+                                <Label htmlFor="buscaPeca" className={styles.searchLabel}>Buscar por Código ou Descrição:</Label>
+                                <div className={styles.searchInputWrapper}>
+                                    <Search size={18} className={styles.searchIcon} />
+                                    <Input type="text" id="buscaPeca" placeholder="Digite código ou descrição..."
+                                        value={termoBusca} onChange={(e) => setTermoBusca(e.target.value)}
+                                        className={styles.searchInput}/>
+                                </div>
+                            </div>
+
                             <Table tableClassName={styles.table} className={styles.tableContainerDefaultFromUi}>
                                 <TableHeader className={styles.thead}>
                                     <TableRow className={styles.tableRow}>
@@ -320,7 +284,40 @@ export default function Estoque() {
                 </div>
             )}
 
-            {activeTab === "cadastro" && (
+            {activeTab === "grafico" && ( // NOVA ABA PARA O GRÁFICO
+                <div className={styles.tabsContent}>
+                    {itensFiltrados.length > 0 ? (
+                         <Card className={classNames(styles.card, styles.graficoCard)}>
+                            <CardContent className={styles.cardContent}>
+                                <h2 className={styles.chartTitle}>📊 Estoque Atual vs. Estoque Mínimo (Visão Geral {termoBusca ? `- Filtrado` : ''})</h2>
+                                <ResponsiveContainer width="100%" height={300}>
+                                    <BarChart data={itensFiltrados} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={"#444"}/>
+                                        <XAxis dataKey="descricao" name="Descrição" stroke={"#888"} tick={{ fontSize: 10 }} interval={0} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis stroke={"#888"} tick={{ fontSize: 12 }} />
+                                        <Tooltip 
+                                            contentStyle={{ backgroundColor: '#333', color: '#fff', borderRadius: 5, border: `1px solid #444` }}
+                                            cursor={{ fill: 'rgba(100,100,100,0.1)' }}
+                                        />
+                                        <Bar dataKey="estoque_atual" fill={"#22d3ee"} name="Estoque Atual" radius={[4,4,0,0]} />
+                                        <Bar dataKey="estoque_minimo" fill={"#f43f5e"} name="Estoque Mínimo" radius={[4,4,0,0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <Card className={styles.card}>
+                            <CardContent className={styles.cardContent}>
+                                <p className={styles.emptyTableCell}>
+                                    {termoBusca ? "Nenhum item encontrado para exibir no gráfico." : "Nenhum item cadastrado para exibir no gráfico."}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
+                </div>
+            )}
+
+            {activeTab === "cadastro" && ( // Formulário de Cadastro/Edição
                 <div className={classNames(styles.tabsContent, styles.formContainer)}> 
                     <Card className={styles.card}>
                         <CardContent className={styles.cardContent}>
@@ -328,7 +325,6 @@ export default function Estoque() {
                                 {editingItem ? `Editando Item (Cód. Fixo: ${editingItem.codigo_fixo})` : "Cadastrar Novo Item de Estoque"}
                             </h3>
                             <form onSubmit={fullHandleSubmit} className={styles.form}>
-                                {/* Campo Código Fixo: Informativo na edição, não presente na criação (será gerado) */}
                                 {editingItem && (
                                     <div className={styles.formGroup}>
                                         <Label className={styles.label} htmlFor="codigo_fixo_display">Código Fixo</Label>
@@ -341,7 +337,6 @@ export default function Estoque() {
                                         <Input id="codigo_fixo_info" className={styles.input} value="(Gerado Automaticamente)"  disabled />
                                     </div>
                                 )}
-                                
                                 <div className={styles.formRow}>
                                     <div className={`${styles.formGroup} ${styles.formGroupFlex2}`}>
                                       <Label className={styles.label} htmlFor="nome">Descrição (Nome da Peça)</Label>
@@ -379,7 +374,7 @@ export default function Estoque() {
                                       <Label className={styles.label} htmlFor="estoque_minimo">Estoque Mínimo</Label>
                                       <Input id="estoque_minimo" className={styles.input} name="estoque_minimo" type="number" min="0" value={form.estoque_minimo} onChange={handleInputChange} required />
                                     </div>
-                                    {!editingItem && ( // Saldo Inicial e Custo apenas na criação
+                                    {!editingItem && (
                                         <>
                                             <div className={`${styles.formGroup} ${styles.formGroupFlex1}`}>
                                                 <Label className={styles.label} htmlFor="estoque_atual">Saldo Inicial</Label>
@@ -391,7 +386,7 @@ export default function Estoque() {
                                             </div>
                                             <div className={`${styles.formGroup} ${styles.formGroupFlex1}`}>
                                                 <Label className={styles.label} htmlFor="valor_medio_unitario">Custo Unit. Saldo Inicial</Label>
-                                                <Input id="valor_medio_unitario" className={styles.input} name="valor_medio_unitario" type="number" min="0" step="0.0001" 
+                                                <Input id="valor_medio_unitario" className={styles.input} name="valor_medio_unitario" type="number" min="0" step="0.0001"
                                                     value={form.valor_medio_unitario} 
                                                     onChange={handleInputChange} 
                                                     required 
@@ -399,7 +394,6 @@ export default function Estoque() {
                                             </div>
                                         </>
                                     )}
-                                    {/* Na edição, mostrar estoque atual mas não permitir edição direta */}
                                     {editingItem && (
                                          <div className={`${styles.formGroup} ${styles.formGroupFlex1}`}>
                                             <Label className={styles.label} htmlFor="estoque_atual_display">Saldo Atual (Info)</Label>
@@ -409,7 +403,7 @@ export default function Estoque() {
                                 </div>
                                 {editingItem && (
                                     <div className={styles.formGroup}>
-                                        <small className={styles.warningText}>O saldo atual é gerenciado por movimentações. Custo médio não é editado aqui.</small>
+                                        <small className={styles.warningText}>O saldo atual é gerenciado por movimentações. Dados cadastrais são editados aqui.</small>
                                     </div>
                                 )}
                                 <div className={styles.submitButtonContainer}>

@@ -2,36 +2,33 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from "react-router-dom";
-import { Home, Package, UserPlus, LogOut, KeyRound } from "lucide-react";
-import "./App.css"; 
+import { Home, Package, UserPlus, LogOut, KeyRound, Archive, Users } from "lucide-react"; // Adicionado Users para Funcionários
+import "./styles/App.css"; 
 
-import { AuthProvider, useAuth } from './AuthContext.jsx';
+import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 
-import App from "./App.jsx"; 
-import Cadastro from "./Cadastro.jsx"; 
-import Estoque from "./Estoque.jsx";
-import Login from "./Login.jsx";
-import AlterarSenha from "./AlterarSenha.jsx"; 
+import App from "./pages/App.jsx"; 
+import Cadastro from "./pages/UserAdminPage.jsx"; 
+import Estoque from "./pages/Estoque.jsx"; 
+import Login from "./pages/Login.jsx";
+import AlterarSenha from "./pages/AlterarSenha.jsx";
+import Funcionarios from "./pages/Funcionarios.jsx"; // <<< NOVO COMPONENTE
 
-console.log("src/main.jsx (Frontend): Script carregado. vLoginDiretoDashboard");
+console.log("src/main.jsx (Frontend): Script carregado. vComRotaFuncionarios");
 
 // Estilos do Menu (COPIE DA SUA ÚLTIMA VERSÃO COMPLETA)
-const menuNavStyles = { /* ... */ };
-const menuLinkStyles = { /* ... */ };
-const menuActiveLinkStyles = { /* ... */ };
-// Vou colar um exemplo para manter o arquivo completo:
-const defaultMenuNavStyles = {
+const menuNavStyles = {
     backgroundColor: '#333', color: '#fff', padding: '0.8rem 1rem',
     display: 'flex', gap: '0.5rem', alignItems: 'center', 
     boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
     position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, height: '3.5rem'
 };
-const defaultMenuLinkStyles = {
+const menuLinkStyles = {
     display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.8rem',
     borderRadius: '0.25rem', textDecoration: 'none', color: '#ddd',
     transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out', fontSize: '0.9rem'
 };
-const defaultMenuActiveLinkStyles = { backgroundColor: '#007bff', color: '#fff' };
+const menuActiveLinkStyles = { backgroundColor: '#007bff', color: '#fff' };
 
 
 function MenuComponent() {
@@ -39,9 +36,9 @@ function MenuComponent() {
     const { usuario, logout } = useAuth();
 
     const getLinkStyle = (path) => {
-        let currentStyle = { ...defaultMenuLinkStyles }; // Usando os defaults aqui
+        let currentStyle = { ...menuLinkStyles };
         if (location.pathname === path || (path !== "/" && location.pathname.startsWith(path) && path.length > 1) ) {
-            currentStyle = { ...currentStyle, ...defaultMenuActiveLinkStyles }; // Usando os defaults aqui
+            currentStyle = { ...currentStyle, ...menuActiveLinkStyles };
         }
         return currentStyle;
     };
@@ -49,18 +46,27 @@ function MenuComponent() {
     if (!usuario) return null; 
 
     return (
-        <nav style={defaultMenuNavStyles}> {/* Usando os defaults aqui */}
+        <nav style={menuNavStyles}>
             <Link to="/" style={getLinkStyle("/")}>
                 <Home size={18} /> Dashboard
             </Link>
-            <Link to="/pecas" style={getLinkStyle("/pecas")}>
-                <Package size={18} /> Estoque
+            <Link to="/estoque" style={getLinkStyle("/estoque")}>
+                <Archive size={18} /> Estoque
             </Link>
+            {/* Link para Gerenciar Usuários (logins) */}
             {(usuario?.role === 'administrador' || usuario?.role === 'gerente') && (
                 <Link to="/admin/gerenciar-usuarios" style={getLinkStyle("/admin/gerenciar-usuarios")}>
-                    <UserPlus size={18} /> Usuários
+                    <UserPlus size={18} /> Contas de Usuário
                 </Link>
             )}
+            {/* NOVO Link para Gerenciar Funcionários (dados cadastrais) */}
+            {(usuario?.role === 'administrador' || usuario?.role === 'gerente') && (
+                <Link to="/cadastros/funcionarios" style={getLinkStyle("/cadastros/funcionarios")}>
+                    <Users size={18} /> Funcionários
+                </Link>
+            )}
+            {/* TODO: Adicionar link para Ordens de Serviço aqui quando a tela estiver pronta */}
+
             <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Link to="/alterar-senha" style={getLinkStyle("/alterar-senha")}>
                     <KeyRound size={18} /> Alterar Senha
@@ -68,7 +74,7 @@ function MenuComponent() {
                 <button
                     onClick={logout}
                     title="Sair do sistema"
-                    style={{ ...defaultMenuLinkStyles, backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0.8rem' }}
+                    style={{ ...menuLinkStyles, backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.5rem 0.8rem' }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#555'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
@@ -82,28 +88,14 @@ function MenuComponent() {
 function RequireAuth({ children }) {
     const { usuario, loadingSession } = useAuth();
     const location = useLocation();
-
-    if (loadingSession) {
-        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#121212', color: '#fff' }}>Verificando autenticação...</div>;
-    }
-
-    if (!usuario) {
-        // Adicionado replace: true aqui também
-        return <Navigate to="/login" state={{ from: location }} replace />; 
-    }
+    if (loadingSession) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#121212', color: '#fff' }}>Verificando autenticação...</div>;
+    if (!usuario) return <Navigate to="/login" state={{ from: location }} replace />;
     return children;
 }
 
 function ApplicationLayout() {
     const { usuario, loadingSession } = useAuth();
-
-    if (loadingSession) {
-        return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#121212', color: '#fff', fontSize: '1.2rem' }}>
-                Carregando Aplicação...
-            </div>
-        );
-    }
+    if (loadingSession) return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#121212', color: '#fff', fontSize: '1.2rem' }}>Carregando Aplicação...</div>;
 
     return (
         <>
@@ -111,14 +103,23 @@ function ApplicationLayout() {
             <div style={{ paddingTop: usuario ? '3.5rem' : '0' }}> 
                 <Routes>
                     <Route path="/login" element={<Login />} />
-                    
                     <Route path="/" element={<RequireAuth><App /></RequireAuth>} />
-                    <Route path="/pecas" element={<RequireAuth><Estoque /></RequireAuth>} />
+                    <Route path="/estoque" element={<RequireAuth><Estoque /></RequireAuth>} />
                     <Route
                         path="/admin/gerenciar-usuarios"
                         element={
                             <RequireAuth>
                                 { (usuario && (usuario.role === 'administrador' || usuario.role === 'gerente')) ? <Cadastro /> : <Navigate to="/" replace /> }
+                            </RequireAuth>
+                        }
+                    />
+                    {/* NOVA Rota para Funcionários */}
+                    <Route
+                        path="/cadastros/funcionarios"
+                        element={
+                            <RequireAuth>
+                                {/* Admin ou Gerente podem acessar cadastro de funcionários */}
+                                { (usuario && (usuario.role === 'administrador' || usuario.role === 'gerente')) ? <Funcionarios /> : <Navigate to="/" replace /> }
                             </RequireAuth>
                         }
                     />

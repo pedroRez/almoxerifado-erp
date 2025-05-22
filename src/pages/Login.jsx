@@ -1,6 +1,6 @@
 // src/Login.jsx
 import React, { useState } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 
 console.log("Login.jsx: Script carregado (vSemAutoFocus).");
 

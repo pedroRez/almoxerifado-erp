@@ -1,0 +1,301 @@
+/* src/styles/Funcionarios.module.css */
+/* Baseado no CadastroUsuario.module.css com ajustes */
+
+.container {
+  min-height: calc(100vh - 3.5rem); /* Altura do menuNavStyles */
+  background-color: #121212;
+  color: #fff;
+  padding: 1rem 1.5rem; /* Padding geral da página */
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pageTitle {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #00bcd4; /* Ciano para títulos */
+  margin-bottom: 1.5rem;
+  text-align: center;
+  width: 100%;
+  max-width: 950px; /* Largura do contentCard */
+}
+
+.contentCard {
+  background-color: #1e1e1e; /* Cor de fundo dos cards */
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #333; /* Borda sutil para os cards */
+  width: 100%;
+  max-width: 950px; /* Largura máxima para o conteúdo principal */
+  box-sizing: border-box;
+  margin-bottom: 2rem;
+}
+
+.tabsList {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #383838; /* Linha separadora das abas */
+}
+
+.tabTrigger {
+  background-color: transparent;
+  color: #a0a0a0; /* Cinza claro para abas inativas */
+  padding: 0.75rem 1.25rem;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  outline: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px; /* Alinha com a borda do tabsList */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.tabTrigger:hover {
+  color: #fff;
+  background-color: #2a2a2a; /* Fundo sutil no hover */
+}
+.tabTriggerActive {
+  background-color: #1e1e1e; /* Mesmo fundo do card */
+  color: #00bcd4; /* Cor de destaque da aba ativa */
+  border-color: #00bcd4; /* Linha inferior ativa */
+}
+
+.tabsContent {
+  margin-top: 1rem;
+}
+
+/* Estilos para o Formulário */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espaçamento entre os grupos de formulário */
+}
+.formRow { /* Para campos lado a lado */
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem; /* Espaçamento entre label e input */
+  flex: 1; /* Para dividir espaço em formRow */
+}
+.label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
+  color: #bbb;
+  text-align: left;
+}
+.input, .select { /* Estilo base para Input e o select HTML */
+  padding: 0.65rem 0.75rem; /* Ajustado */
+  border-radius: 6px;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 0.9rem;
+}
+.input:focus, .select:focus {
+  outline: none;
+  border-color: #00bcd4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2);
+}
+.checkbox {
+  width: 1.1em;
+  height: 1.1em;
+  margin-right: 0.5em;
+  vertical-align: middle;
+  cursor: pointer;
+  accent-color: #00bcd4; /* Cor do checkbox marcado */
+}
+.formGroup[style*="flex-direction: row"] .label { 
+  margin-bottom: 0; 
+  cursor: pointer;
+  color: #e0e0e0; /* Cor do label do checkbox */
+}
+
+.submitButtonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+.submitButton {
+  background-color: #007bff;
+  color: #fff;
+  padding: 0.7rem 1.3rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500; /* Um pouco menos bold */
+  transition: background-color 0.2s ease;
+  font-size: 0.9rem;
+  width: auto;
+  min-width: 140px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.submitButton:hover {
+  background-color: #0056b3;
+}
+
+/* Estilos para a Tabela de Funcionários */
+.tableContainerDefaultFromUi { /* Aplicada ao div wrapper no components/ui/table.jsx */
+  width: 100%;
+  overflow-x: auto; 
+  border: 1px solid #333;
+  border-radius: 8px;
+  background-color: #1e1e1e; 
+  margin-bottom: 1.5rem; 
+}
+.table {
+  width: 100% !important; 
+  table-layout: auto; /* MUDADO PARA AUTO para colunas se ajustarem melhor ao conteúdo */
+  border-collapse: collapse; 
+  color: #ccc; 
+  font-size: 0.875rem; /* Um pouco menor para caber mais info */
+}
+.thead { 
+  background-color: #2a2a2a;
+}
+.tableRow { 
+  border-bottom: 1px solid #383838; /* Borda mais sutil */
+  transition: background-color 0.15s ease-in-out;
+}
+.tableRow:last-child {
+  border-bottom: none; 
+}
+.tableRow:hover { 
+  background-color: rgba(255, 255, 255, 0.04); 
+}
+
+.th { 
+  color: #00bcd4 !important; 
+  background-color: #2c2c2c !important; 
+  padding: 0.65rem 0.9rem;  /* Ajustado padding */
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-right: 1px solid #383838;
+  vertical-align: middle;
+  text-align: left; 
+  white-space: nowrap; 
+}
+.th:last-child {
+  border-right: none;
+}
+
+.td { 
+  padding: 0.65rem 0.9rem; 
+  border-right: 1px solid #383838;
+  vertical-align: middle; 
+  text-align: left; 
+  color: #ccc; 
+}
+.td:last-child {
+  border-right: none;
+}
+
+.actionsHeader { 
+  text-align: right !important;
+  width: 130px; /* Reduzido, já que os botões são só ícones ou pequenos */
+}
+.actions { 
+  display: flex !important; 
+  gap: 0.5rem !important; 
+  justify-content: flex-end !important; 
+  align-items: center !important;
+}
+.actionButton { 
+  display: inline-flex !important; 
+  align-items: center; 
+  justify-content: center; /* Centraliza ícone se não houver texto */
+  gap: 0.3rem !important; 
+  flex-shrink: 0; 
+  padding: 0.35rem 0.7rem !important; /* Menor para botões de ação na tabela */
+  font-size: 0.8rem !important;
+}
+.actionButton svg { /* Garante que o ícone não seja muito grande */
+    width: 14px;
+    height: 14px;
+}
+
+/* Mensagens de Status, Célula Vazia, Título do Formulário */
+.statusMessage { text-align: center; padding: 0.75rem; margin: 1rem auto; border-radius: 6px; font-weight: 500; max-width: 600px; }
+.errorMessage { color: #fff; background-color: #d32f2f; border: 1px solid #b71c1c; }
+.successMessage { color: #121212; background-color: #a5d6a7; border: 1px solid #388e3c; }
+.emptyTableCell { text-align: center !important; color: #777; font-style: italic; padding: 2rem 0 !important; }
+.formTitle { color: #00bcd4; border-bottom: 1px solid #444; padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.1rem; font-weight: 600; text-align: left; }
+
+/* Campo de Busca (reutilizado de Estoque.module.css com pequenos ajustes) */
+.searchContainer {
+  margin-bottom: 1rem; /* Menor margem abaixo da busca */
+  /* padding: 1rem; */ /* Removido padding, pois o Card já tem */
+  /* background-color: #1e1e1e; */
+  /* border-radius: 8px; */
+  /* border: 1px solid #333; */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.searchLabel { 
+  font-weight: 500; 
+  font-size: 0.9rem; 
+  color: #bbb; 
+  text-align: left; 
+  margin-bottom: 0.25rem; 
+}
+.searchInputWrapper { 
+  position: relative; 
+  display: flex; 
+  align-items: center; 
+}
+.searchIcon { 
+  position: absolute; 
+  left: 0.75rem; 
+  color: #777; 
+  pointer-events: none; 
+}
+.searchInput { 
+  padding: 0.65rem 0.75rem; /* Ajustado padding */
+  padding-left: 2.5rem; 
+  border-radius: 6px; 
+  background-color: #2c2c2c; 
+  color: #e0e0e0; 
+  border: 1px solid #444; 
+  width: 100%; 
+  box-sizing: border-box; 
+  font-size: 0.9rem; /* Ajustado */
+}
+.searchInput:focus { 
+  outline: none; 
+  border-color: #00bcd4; 
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2); 
+}
+
+.link { 
+  background: none; 
+  color: #00bcd4; 
+  border: none; 
+  cursor: pointer; 
+  font-size: 0.9rem; 
+  text-decoration: underline; 
+  padding: 0.5rem;
+}
+.link:hover { 
+  color: #22d3ee;
+}

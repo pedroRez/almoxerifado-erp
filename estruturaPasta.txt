@@ -1,0 +1,54 @@
+almoxerifado-erp/
+├── database/                 駑 Pasta para toda a lógica de backend do banco de dados
+│   ├── dbConfig.js           # Configuração da conexão e exportação do Pool PostgreSQL
+│   ├── dbUtils.js            # Função utilitária `executeQuery`
+│   ├── dbSchema.js           # Função `initializeDatabaseSchema` (cria tabelas IF NOT EXISTS)
+│   ├── usuariosDB.js         # Funções CRUD para a tabela 'users'
+│   ├── funcionariosDB.js     # Funções CRUD para a tabela 'funcionarios'
+│   ├── estoqueDB.js          # Funções CRUD para 'estoque' e 'movimentacoes_estoque'
+│   └── ordensServicoDB.js    # Funções CRUD para 'ordens_servico' e suas tabelas relacionadas
+│
+├── public/                   駑 Assets estáticos públicos (ex: ícone da aplicação)
+│   └── icon.ico
+│
+├── src/                      駑 Código do Frontend React
+│   ├── assets/               # Imagens, fontes, etc., específicas do frontend
+│   │
+│   ├── components/           # Componentes React reutilizáveis
+│   │   └── ui/               # Seus componentes de UI (Button, Card, Table, etc.)
+│   │       ├── Button.jsx
+│   │       ├── Card.jsx
+│   │       ├── Input.jsx
+│   │       ├── Label.jsx
+│   │       └── table.jsx
+│   │
+│   ├── contexts/             # Contextos React
+│   │   └── AuthContext.jsx   # Nosso contexto de autenticação
+│   │
+│   ├── pages/                # Componentes de nível de página/tela principal
+│   │   ├── LoginPage.jsx     # Antigo Login.jsx
+│   │   ├── DashboardPage.jsx # Antigo App.jsx
+│   │   ├── EstoquePage.jsx   # Antigo Estoque.jsx (que era CadastroPeca.jsx)
+│   │   ├── UserAdminPage.jsx # Antigo Cadastro.jsx (gerenciamento de usuários)
+│   │   ├── ChangePasswordPage.jsx # Antigo AlterarSenha.jsx
+│   │   ├── FuncionariosPage.jsx   # NOVA TELA para gerenciar funcionários
+│   │   └── OrdensServicoPage.jsx  # NOVA TELA para Ordens de Serviço (a ser construída)
+│   │
+│   ├── styles/               # Arquivos CSS
+│   │   ├── global.css        # Estilos globais (para html, body, #root, resets)
+│   │   ├── EstoquePage.module.css    # CSS Module para EstoquePage.jsx
+│   │   ├── UserAdminPage.module.css  # CSS Module para UserAdminPage.jsx
+│   │   └── FuncionariosPage.module.css # CSS Module para FuncionariosPage.jsx
+│   │
+│   └── main.jsx              # Ponto de entrada da aplicação React (configura Router)
+│
+├── .eslintignore             # Configuração do ESLint
+├── .eslintrc.cjs             # Configuração do ESLint (ou eslint.config.js)
+├── .gitignore
+├── index.html                # HTML principal para o Vite
+├── main.js                   # Ponto de entrada do PROCESSO PRINCIPAL DO ELECTRON (backend)
+├── preload.js                # Script de pré-carregamento do Electron
+├── setup_xerife_db.sql       # Script SQL para setup inicial completo do banco PostgreSQL
+├── package.json
+├── package-lock.json
+└── vite.config.js

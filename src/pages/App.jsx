@@ -1,7 +1,7 @@
 // src/App.jsx (Dashboard principal)
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAuth } from './AuthContext.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 console.log("App.jsx (Dashboard): Script carregado.");
 

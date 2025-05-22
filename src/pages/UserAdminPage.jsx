@@ -1,19 +1,19 @@
-// src/Cadastro.jsx (Gerenciamento de Usuários - Admin/Gerente)
+// src/UserAdminPage.jsx (Gerenciamento de Usuários - Admin/Gerente)
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserPlus, Edit3, Trash, ListChecks, KeyRound, CheckSquare, XSquare } from 'lucide-react';
-import { useAuth } from './AuthContext.jsx'; // Para obter o papel do usuário logado
+import { useAuth } from '../contexts/AuthContext.jsx'; // Para obter o papel do usuário logado
 
 // Importando componentes de UI - VERIFIQUE SE OS CAMINHOS ESTÃO CORRETOS
-import { Button } from './components/ui/button.jsx';
-import { Input } from './components/ui/input.jsx';
-import { Label } from './components/ui/label.jsx';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './components/ui/table.jsx';
-import { Card, CardContent } from './components/ui/card.jsx';
+import { Button } from '../components/ui/button.jsx';
+import { Input } from '../components/ui/input.jsx';
+import { Label } from '../components/ui/label.jsx';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table.jsx';
+import { Card, CardContent } from '../components/ui/card.jsx';
 
-import styles from './CadastroUsuario.module.css';
+import styles from '../styles/UserAdminPage.module.css';
 
-console.log("Cadastro.jsx (Admin User Management vComEdicaoExclusao): Script carregado.");
+console.log("UserAdminPage.jsx (Admin User Management vComEdicaoExclusao): Script carregado.");
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ');
@@ -53,7 +53,7 @@ export default function Cadastro() {
       return;
     }
     setLoadingUsers(true);
-    console.log("Cadastro.jsx: Buscando lista de usuários...");
+    console.log("UserAdminPage.jsx: Buscando lista de usuários...");
     try {
       const users = await window.api.getAllUsers();
       setUsuariosList(users || []);
@@ -100,7 +100,7 @@ export default function Cadastro() {
         if (!window.api || !window.api.updateUserDetails) {
           setMensagem({ texto: 'API de atualização não disponível.', tipo: "erro" }); return;
         }
-        console.log("Cadastro.jsx: Atualizando usuário:", formData);
+        console.log("UserAdminPage.jsx: Atualizando usuário:", formData);
         await window.api.updateUserDetails({
           userId: formData.id,
           username: formData.username,
@@ -125,7 +125,7 @@ export default function Cadastro() {
         if (!window.api || !window.api.createUser) {
           setMensagem({ texto: 'API de criação não disponível.', tipo: "erro" }); return;
         }
-        console.log("Cadastro.jsx: Criando usuário:", formData);
+        console.log("UserAdminPage.jsx: Criando usuário:", formData);
         const payload = {
             username: formData.username,
             password: formData.password,
@@ -143,7 +143,7 @@ export default function Cadastro() {
       fetchUsers(); // Atualiza a lista
       setActiveTab('listar');
     } catch (error) {
-      console.error('Cadastro.jsx: Erro ao salvar usuário:', error);
+      console.error('UserAdminPage.jsx: Erro ao salvar usuário:', error);
       setMensagem({ texto: 'Erro: ' + (error.message || 'Não foi possível salvar o usuário.'), tipo: "erro" });
     }
   };

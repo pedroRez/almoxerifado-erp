@@ -1,12 +1,12 @@
 // src/AlterarSenha.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from '../contexts/AuthContext.jsx';
 // Verifique os caminhos para seus componentes de UI
-import { Button } from './components/ui/button.jsx';
-import { Input } from './components/ui/input.jsx';
-import { Label } from './components/ui/label.jsx';
-import styles from './CadastroUsuario.module.css'; // Reutilizando estilos
+import { Button } from '../components/ui/button.jsx';
+import { Input } from '../components/ui/input.jsx';
+import { Label } from '../components/ui/label.jsx';
+import styles from '../styles/UserAdminPage.module.css'; // Reutilizando estilos
 
 console.log("AlterarSenha.jsx: Script carregado (vSemAlertBloqueante).");
 
