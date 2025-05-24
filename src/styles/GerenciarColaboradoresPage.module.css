@@ -1,0 +1,150 @@
+/* src/styles/GerenciarColaboradoresPage.module.css */
+
+/* --- Container Principal da Página --- */
+.container {
+  min-height: calc(100vh - 3.5rem); /* Ajuste se seu menu global for diferente de 3.5rem */
+  background-color: #121212; 
+  color: #fff;
+  padding: 1rem 0.5rem; 
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* --- Cabeçalho da Página (Título e Ícone) --- */
+.pageHeader { /* Equivalente ao .nav do Estoque.module.css */
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem; 
+  padding: 0.75rem 1rem; 
+  background-color: #1e1e1e; 
+  border-radius: 8px; 
+  border: 1px solid #333;
+}
+.navTitleContainer { /* Para alinhar ícone e título */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.pageIcon { /* Equivalente ao .navIcon */
+  color: #00bcd4; 
+}
+.pageTitleActual { /* Equivalente ao .navTitle, usando h2 */
+  font-size: 1.5rem; 
+  font-weight: 600; 
+  color: #e0e0e0; 
+}
+
+/* --- Mensagem de Status --- */
+.statusMessage { 
+  text-align: center; 
+  padding: 0.75rem; 
+  margin: 0 auto 1.5rem auto;
+  border-radius: 6px; 
+  font-weight: 500; 
+  max-width: 800px; /* Ou 100% se quiser que ocupe a largura do container */
+  width: 100%;
+}
+.errorMessage { color: #fff; background-color: #d32f2f; border: 1px solid #b71c1c; }
+.successMessage { color: #121212; background-color: #a5d6a7; border: 1px solid #388e3c; }
+
+/* --- Abas --- */
+.tabsList {
+  display: flex; 
+  gap: 0.5rem; 
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #333;
+  width: 100%; /* Ocupa a largura disponível no .container */
+}
+.tabTrigger {
+  background-color: transparent;
+  color: #aaa; 
+  padding: 0.75rem 1.5rem; 
+  border-radius: 6px 6px 0 0; 
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  outline: none;
+  font-weight: 500;
+  font-size: 0.9rem; /* Mantendo o tamanho do Estoque.module.css */
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-bottom: 2px solid transparent; 
+  margin-bottom: -2px; 
+  display: inline-flex; 
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap; 
+  /* flex-grow: 1;  << Importante: Se as abas do Estoque não usam flex-grow, removemos aqui também para consistência */
+}
+.tabTrigger:hover { color: #fff; background-color: #2a2a2a; }
+.tabTriggerActive { background-color: #1e1e1e; color: #00bcd4; border-color: #00bcd4; }
+
+.tabsContent {
+  margin-top: 1rem; /* Espaço padrão acima do Card da aba */
+  width: 100%;
+}
+
+/* Card para o conteúdo de cada aba (listagem ou formulário) */
+.contentCardForTab { /* Similar ao .card do Estoque.module.css */
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  padding: 1rem; /* Padding interno do card de conteúdo (como no .card do Estoque) */
+  margin-bottom: 1.5rem; 
+  border: 1px solid #333;
+  width: 100%; 
+  box-sizing: border-box;
+}
+
+/* Estilos para o Formulário (dentro do .contentCardForTab da aba de cadastro) */
+.form { display: flex; flex-direction: column; gap: 1.25rem; }
+.formSectionTitle { font-size: 1.1rem; color: #00aacc; margin-top: 1.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #44444488; }
+.formSectionTitle:first-child { margin-top: 0; }
+.formRow { display: flex; gap: 1.25rem; align-items: flex-start; }
+.formGroup { display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+.label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.9rem; color: #bbb; text-align: left; }
+.input, .select { padding: 0.75rem; border-radius: 6px; background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #444; width: 100%; box-sizing: border-box; font-size: 1rem; }
+.input:focus, .select:focus { outline: none; border-color: #00bcd4; box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2); }
+.input[disabled] { background-color: #383838; cursor: not-allowed; opacity: 0.7; }
+.checkbox { width: 1.1em; height: 1.1em; margin-top: 0.1em; margin-right: 0.5em; vertical-align: middle; cursor: pointer; accent-color: #00bcd4; }
+.checkboxLabel { composes: label; margin-bottom: 0; cursor: pointer; color: #e0e0e0; font-weight: normal; }
+.formGroupRow { composes: formGroup; flex-direction: row; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+.submitButtonContainer { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.submitButton { background-color: #007bff; color: #fff; padding: 0.75rem 1.5rem; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease; font-size: 1rem; width: auto; min-width: 160px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }
+.submitButton:hover { background-color: #0056b3; }
+.formTitle { color: #00bcd4; border-bottom: 1px solid #444; padding-bottom: 0.75rem; margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600; text-align: left; }
+.warningText { font-size: 0.8rem; color: #ffcc00; margin-top: 0.25rem; text-align: left; }
+
+/* Tabela e Busca (dentro do .contentCardForTab da aba de listagem) */
+/* Classe para ser usada no CardContent que envolve busca e tabela, se precisar remover padding padrão do Card */
+.cardContentTableAndSearchWrapper { 
+  padding: 0 !important; 
+}
+.searchContainer {
+  padding: 0 0 1rem 0; /* Padding apenas embaixo para separar da tabela, como no Estoque */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.searchLabel { font-weight: 500; font-size: 0.9rem; color: #bbb; text-align: left; margin-bottom: 0.25rem; }
+.searchInputWrapper { position: relative; display: flex; align-items: center; }
+.searchIcon { position: absolute; left: 0.75rem; color: #777; pointer-events: none; }
+.searchInput { padding: 0.75rem; padding-left: 2.5rem; border-radius: 6px; background-color: #2c2c2c; color: #e0e0e0; border: 1px solid #444; width: 100%; box-sizing: border-box; font-size: 1rem; }
+.searchInput:focus { outline: none; border-color: #00bcd4; box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.2); }
+
+.tableContainerDefaultFromUi { width: 100%; overflow-x: auto; }
+.table { width: 100% !important; table-layout: auto; /* Mantido auto para colunas se ajustarem */ border-collapse: collapse; color: #ccc; font-size: 0.875rem; }
+.thead { /* .th controla o fundo */ }
+.tableRow { border-bottom: 1px solid #383838; transition: background-color 0.15s ease-in-out; }
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background-color: rgba(255, 255, 255, 0.04); }
+.th { color: #00bcd4 !important; background-color: #2c2c2c !important; padding: 0.65rem 0.9rem;  font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-right: 1px solid #383838; vertical-align: middle; text-align: left; white-space: nowrap; }
+.th:last-child { border-right: none; }
+.td { padding: 0.65rem 0.9rem; border-right: 1px solid #383838; vertical-align: middle; text-align: left; color: #ccc; word-break: break-word; }
+.td:last-child { border-right: none; }
+.actionsHeader { text-align: right !important; width: 130px; } /* Mesma largura do CSS de Funcionarios anterior */
+.actions { display: flex !important; gap: 0.5rem !important; justify-content: flex-end !important; align-items: center !important; }
+.actionButton { display: inline-flex !important; align-items: center; justify-content: center; gap: 0.3rem !important; flex-shrink: 0; padding: 0.35rem 0.7rem !important; font-size: 0.8rem !important; }
+.actionButton svg { width: 14px; height: 14px; }
+.emptyTableCell { text-align: center !important; color: #777; font-style: italic; padding: 2rem 0 !important; }
+
+.link { background: none; color: #00bcd4; border: none; cursor: pointer; font-size: 0.9rem; text-decoration: underline; padding: 0.5rem;}
+.link:hover { color: #22d3ee;}

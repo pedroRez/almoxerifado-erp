@@ -183,12 +183,14 @@ export default function Estoque() {
 
     return (
         <div className={styles.container}>
-            <nav className={styles.nav}>
+            <nav>
                 <div className={styles.navTitleContainer}>
                     <Archive size={28} className={styles.navIcon} />
                     <h2 className={styles.navTitle}>Gerenciamento de Estoque</h2>
                 </div>
             </nav>
+
+             
 
             {mensagemStatus.texto && (
                 <p className={`${styles.statusMessage} ${mensagemStatus.tipo === "erro" ? styles.errorMessage : styles.successMessage}`}>
@@ -203,18 +205,19 @@ export default function Estoque() {
                 >
                     <List size={18} style={{marginRight: '0.3rem'}} /> Listagem
                 </button>
-                <button
-                    className={`${styles.tabTrigger} ${activeTab === "grafico" ? styles.tabTriggerActive : ""}`}
-                    onClick={() => fullResetFormAndTab("grafico")}
-                >
-                    <BarChart3 size={18} style={{marginRight: '0.3rem'}} /> Gráfico
-                </button>
+               
                 <button
                     className={`${styles.tabTrigger} ${activeTab === "cadastro" ? styles.tabTriggerActive : ""}`}
                     onClick={() => { resetForm(); setActiveTab("cadastro"); setMensagemStatus({texto:"", tipo:""});}}
                 >
                     <PackagePlus size={18} style={{marginRight: '0.3rem'}} /> 
                     {editingItem ? "Editar Item" : "Novo Item"}
+                </button>
+                 <button
+                    className={`${styles.tabTrigger} ${activeTab === "grafico" ? styles.tabTriggerActive : ""}`}
+                    onClick={() => fullResetFormAndTab("grafico")}
+                >
+                    <BarChart3 size={18} style={{marginRight: '0.3rem'}} /> Gráfico
                 </button>
             </div>
 

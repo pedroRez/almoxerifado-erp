@@ -1,7 +1,7 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require('electron');
 
-console.log("[preload.js] Script de pré-carregamento (vComOS_Func_API)...");
+console.log("[preload.js] Script de pré-carregamento (vComCreateFuncionarioAndOrUser_FINAL)...");
 
 contextBridge.exposeInMainWorld('api', {
     // Peças
@@ -17,24 +17,23 @@ contextBridge.exposeInMainWorld('api', {
     getSession: () => ipcRenderer.invoke('auth:get-session'),
     changePassword: (passwords) => ipcRenderer.invoke('auth:change-password', passwords),
 
-    // Gerenciamento de Usuários
-    createUser: (userData) => ipcRenderer.invoke('users:create', userData),
+    // Gerenciamento de Contas de Usuário (user records) - Funções diretas para users
+    createUserAccount: (userData) => ipcRenderer.invoke('users:create', userData), // Para criar/editar user logins diretamente
     getAllUsers: () => ipcRenderer.invoke('users:fetch-all'),
     updateUserDetails: (details) => ipcRenderer.invoke('users:update-details', details),
     adminResetPassword: (resetData) => ipcRenderer.invoke('users:admin-reset-password', resetData),
     deleteUser: (userId) => ipcRenderer.invoke('users:delete', userId),
 
-    // NOVAS: Funcionários (distintos de Usuários com login)
+    // Gerenciamento de Funcionários (employee records) e Criação Unificada
     getAllFuncionarios: () => ipcRenderer.invoke('funcionarios:fetch-all'),
-    createFuncionario: (funcionarioData) => ipcRenderer.invoke('funcionarios:create', funcionarioData),
-    updateFuncionario: (id_funcionario, funcionarioData) => ipcRenderer.invoke('funcionarios:update', id_funcionario, funcionarioData),
-    // deleteFuncionario: (id_funcionario) => ipcRenderer.invoke('funcionarios:delete', id_funcionario), // Se for implementar
-    deleteFuncionario: (id_funcionario) => ipcRenderer.invoke('funcionarios:delete', id_funcionario),
-    // NOVAS: Ordens de Serviço (CRUD inicial)
+    // Função unificada que cria o funcionário e, opcionalmente, o usuário associado
+    createFuncionarioAndOrUser: (data) => ipcRenderer.invoke('funcionarios:create-full', data),
+    updateFuncionario: (id_funcionario, funcionarioData) => ipcRenderer.invoke('funcionarios:update', { id_funcionario, funcionarioData }),
+    deleteFuncionario: (id_funcionario) => ipcRenderer.invoke('funcionarios:delete', id_funcionario), // Faz soft delete (inativa)
+
+    // Ordens de Serviço
     getAllOrdensServico: () => ipcRenderer.invoke('os:fetch-all'),
     createOrdemServico: (osData) => ipcRenderer.invoke('os:create', osData)
-    // TODO: updateOrdemServico, getOrdemServicoById, etc.
-    // TODO: Funções para os_materiais, os_mao_de_obra, os_caracteristicas
 });
 
-console.log("[preload.js] API do Electron exposta como window.api");
+console.log("[preload.js] API do Electron exposta com sucesso como window.api");

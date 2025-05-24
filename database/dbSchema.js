@@ -1,11 +1,10 @@
 // database/dbSchema.js
 import { executeQuery } from './dbUtils.js';
 
-console.log("[dbSchema.js] Script carregado (vAposSetupSQL_SimplificadoCorreto).");
+console.log("[dbSchema.js] Script carregado (vFinal_AposSetupSQL_CompletoSemPlaceholders).");
 
 export async function initializeDatabaseSchema() {
   console.log("[dbSchema.js] Verificando existência das tabelas (APENAS TABELAS)...");
-  // A conexão é pega pela executeQuery.
   try {
     // Tabela Users
     await executeQuery(`

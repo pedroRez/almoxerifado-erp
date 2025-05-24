@@ -1,11 +1,15 @@
 // database/usuariosDB.js
-import { executeQuery } from './dbUtils.js'; // Importa a função de executar query
+import { executeQuery } from './dbUtils.js';
+import pool from './dbConfig.js'; // Import pool para transações se necessário
 
-console.log("[usuariosDB.js] Script carregado.");
+console.log("[usuariosDB.js] Script carregado. vFinalCompleta");
 
 export async function findUserByUsername(username) {
   // console.log("[usuariosDB.js] findUserByUsername: Buscando usuário:", username);
-  const sql = `SELECT id, username, nome_completo, password_hash, role, can_approve_purchase_orders FROM users WHERE username = $1 AND is_deleted = FALSE;`;
+  const sql = `
+    SELECT id, username, nome_completo, password_hash, role, can_approve_purchase_orders 
+    FROM users 
+    WHERE username = $1 AND is_deleted = FALSE;`;
   const result = await executeQuery(sql, [username]);
   return result.rows[0];
 }
@@ -29,10 +33,9 @@ export async function insertUser(username, nome_completo, passwordHash, role, ca
     console.log("[usuariosDB.js] insertUser: Usuário inserido:", result.rows[0]);
     return result.rows[0];
   } catch (error) {
-     if (error.code === '23505' && (error.constraint === 'users_username_key' || error.constraint === 'users_username_idx')) { // 'users_username_idx' é um nome comum para o índice UNIQUE
+     if (error.code === '23505' && (error.constraint === 'users_username_key' || error.constraint === 'users_username_idx')) {
       throw new Error(`Nome de usuário '${username}' já existe.`);
     }
-    // Relança outros erros para serem tratados pelo main.js
     console.error("[usuariosDB.js] Erro em insertUser:", error.message);
     throw error;
   }
@@ -58,13 +61,12 @@ export async function getUsersByRole(role) {
 
 export async function updateUserPassword(userId, newPasswordHash) {
   // console.log("[usuariosDB.js] updateUserPassword: Atualizando senha para UserID:", userId);
-  const sql = `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2 AND is_deleted = FALSE;`;
+  // updated_at é atualizado pela trigger trigger_set_timestamp_geral
+  const sql = `UPDATE users SET password_hash = $1 WHERE id = $2 AND is_deleted = FALSE;`;
   const result = await executeQuery(sql, [newPasswordHash, userId]);
   if (result.rowCount === 0) {
-    // console.warn(`[usuariosDB.js] updateUserPassword: Nenhum usuário encontrado com ID ${userId} ou já deletado.`);
     throw new Error(`Usuário com ID ${userId} não encontrado ou já deletado para atualização de senha.`);
   }
-  // console.log("[usuariosDB.js] updateUserPassword: Senha atualizada para UserID:", userId);
   return { changes: result.rowCount };
 }
 
@@ -100,22 +102,18 @@ export async function updateUserFullDetails(userId, { username, nome_completo, r
   }
 
   if (updateFields.length === 0) {
-    // console.warn("[usuariosDB.js] updateUserFullDetails: Nenhum campo válido fornecido para atualização.");
     return { changes: 0, message: "Nenhum dado válido para atualizar." };
   }
   // updated_at é atualizado pela trigger "trigger_set_timestamp_geral"
 
-  params.push(userId); // Adiciona o ID do usuário ao final para a cláusula WHERE
+  params.push(userId);
   const sql = `UPDATE users SET ${updateFields.join(", ")} WHERE id = $${paramCount} AND is_deleted = FALSE RETURNING *;`;
   
-  // console.log("[usuariosDB.js] updateUserFullDetails - SQL:", sql, "Params:", params);
   try {
     const result = await executeQuery(sql, params);
     if (result.rowCount === 0) throw new Error(`Usuário com ID ${userId} não encontrado ou já deletado para atualização.`);
     const user = result.rows[0];
-    // Garante que o campo booleano seja retornado como booleano
     const updatedUser = {...user, can_approve_purchase_orders: Boolean(user.can_approve_purchase_orders)};
-    // console.log(`[usuariosDB.js] SUCESSO PostgreSQL updateUserFullDetails para UserID: ${userId}. Usuário atualizado:`, updatedUser);
     return updatedUser;
   } catch (error) {
     if (error.code === '23505' && (error.constraint === 'users_username_key' || error.constraint === 'users_username_idx')) {
@@ -131,17 +129,14 @@ export async function adminResetUserPassword(targetUserId, newPasswordHash, admi
   const sql = `UPDATE users SET password_hash = $1, updated_by_user_id = $2 /* updated_at é pela trigger */ WHERE id = $3 AND is_deleted = FALSE;`;
   const result = await executeQuery(sql, [newPasswordHash, admin_user_id, targetUserId]);
   if (result.rowCount === 0) throw new Error(`Usuário alvo com ID ${targetUserId} não encontrado ou já deletado.`);
-  // console.log(`[usuariosDB.js] adminResetUserPassword: Senha resetada para UserID: ${targetUserId}.`);
   return { changes: result.rowCount };
 }
 
 export async function deleteUser(id_to_delete, admin_user_id) {
   // console.log(`[usuariosDB.js] deleteUser: Usuário ID ${admin_user_id} marcando usuário ID ${id_to_delete} como deletado.`);
-  // Implementando Soft Delete
   const sql = `UPDATE users SET is_deleted = TRUE, deleted_at = NOW(), deleted_by_user_id = $1 /* updated_at é pela trigger */ WHERE id = $2 AND is_deleted = FALSE RETURNING id;`;
   const result = await executeQuery(sql, [admin_user_id, id_to_delete]);
   if (result.rowCount === 0) throw new Error(`Usuário com ID ${id_to_delete} não encontrado ou já deletado.`);
-  // console.log(`[usuariosDB.js] deleteUser: Usuário ID ${id_to_delete} marcado como deletado.`);
   return { changes: result.rowCount };
 }
 

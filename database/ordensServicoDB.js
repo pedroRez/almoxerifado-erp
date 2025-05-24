@@ -1,11 +1,10 @@
 // database/ordensServicoDB.js
 import { executeQuery } from './dbUtils.js';
-import pool from './dbConfig.js'; // Para transações, se necessário
+// import pool from './dbConfig.js'; // Descomente se precisar de transações explícitas aqui
 
-console.log("[ordensServicoDB.js] Script carregado.");
+console.log("[ordensServicoDB.js] Script carregado. vInicialCompleta");
 
 export async function getAllOrdensServico() {
-  // console.log("[ordensServicoDB.js] getAllOrdensServico: Buscando todas as OS...");
   const sql = `
     SELECT 
         os.*, 
@@ -14,8 +13,8 @@ export async function getAllOrdensServico() {
         f_solic.nome_completo_funcionario as nome_solicitante_funcionario,
         u_sup_aprov.username as username_supervisor_aprov,
         u_lid_aprov.username as username_lider_aprov,
-        TO_CHAR(os.data_abertura, 'YYYY-MM-DD HH24:MI:SS') as data_abertura_formatada,
-        TO_CHAR(os.data_fechamento, 'YYYY-MM-DD HH24:MI:SS') as data_fechamento_formatada
+        TO_CHAR(os.data_abertura, 'DD/MM/YYYY HH24:MI') as data_abertura_formatada,
+        TO_CHAR(os.data_fechamento, 'DD/MM/YYYY HH24:MI') as data_fechamento_formatada
     FROM ordens_servico os
     JOIN users u_resp ON os.responsavel_abertura_id = u_resp.id
     LEFT JOIN funcionarios f_solic ON os.solicitante_servico_id = f_solic.id_funcionario
@@ -33,7 +32,6 @@ export async function getAllOrdensServico() {
 }
 
 export async function insertOrdemServico(osData) {
-  // console.log("[ordensServicoDB.js] insertOrdemServico: Inserindo OS:", osData);
   const { 
       numero_os_manual, prefixo_veiculo, placa_veiculo, km_veiculo, horimetro_veiculo,
       local_servico, responsavel_abertura_id, motivos_entrada, solicitante_servico_id,
@@ -63,6 +61,7 @@ export async function insertOrdemServico(osData) {
   ];
   try {
       const result = await executeQuery(sql, params);
+      // Formata a data de abertura para o objeto retornado, se necessário
       const newOSDb = result.rows[0];
       const newOS = {...newOSDb, data_abertura: newOSDb.data_abertura_formatada };
       return newOS;
@@ -70,17 +69,14 @@ export async function insertOrdemServico(osData) {
       if (error.code === '23505' && error.constraint === 'ordens_servico_numero_os_manual_key') {
           throw new Error(`Ordem de Serviço manual número '${numero_os_manual}' já existe.`);
       }
-      // console.error("[ordensServicoDB.js] Erro em insertOrdemServico:", error.message);
       throw error;
   }
 }
-
-// Adicione aqui outras funções CRUD para ordens_servico, os_materiais, os_mao_de_obra, os_caracteristicas
-// Exemplo:
-// export async function getOrdemServicoById(id_os) { ... }
-// export async function updateOrdemServicoStatus(id_os, status, userId) { ... }
-// export async function addMaterialToOS(osMaterialData) { ... }
-// export async function addMaoDeObraToOS(osMaoDeObraData) { ... }
-// export async function addCaracteristicaToOS(osCaracteristicaData) { ... }
+// Adicionar aqui:
+// getOrdemServicoById(id_os)
+// updateOrdemServico(id_os, osData) (para status, fechamento, aprovações, etc.)
+// Funções CRUD para os_caracteristicas_selecionadas
+// Funções CRUD para os_mao_de_obra
+// Funções CRUD para os_materiais (incluindo lógica de aprovação e baixa de estoque)
 
 console.log("[ordensServicoDB.js] Funções CRUD de Ordens de Serviço exportadas (inicial).");
